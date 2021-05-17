@@ -9,8 +9,6 @@
  */
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -19,18 +17,12 @@ namespace Server.Models {
 	/// 
 	/// </summary>
 	[DataContract]
-	public partial class Configuration : IEquatable<Configuration> {
+	public partial class RealTimePrice : PriceBase, IEquatable<RealTimePrice> {
 		/// <summary>
-		/// Gets or Sets PinnedStocks
+		/// Gets or Sets Time
 		/// </summary>
-		[DataMember(Name = "pinnedStocks")]
-		public List<string> PinnedStocks { get; set; }
-
-		/// <summary>
-		/// Gets or Sets RefreshInterval
-		/// </summary>
-		[DataMember(Name = "refreshInterval")]
-		public ConfigurationRefreshInterval RefreshInterval { get; set; }
+		[DataMember(Name = "time")]
+		public DateTime? Time { get; set; }
 
 		/// <summary>
 		/// Returns the string presentation of the object
@@ -38,9 +30,8 @@ namespace Server.Models {
 		/// <returns>String presentation of the object</returns>
 		public override string ToString() {
 			var sb = new StringBuilder();
-			sb.Append("class Configuration {\n");
-			sb.Append("  PinnedStocks: ").Append(PinnedStocks).Append("\n");
-			sb.Append("  RefreshInterval: ").Append(RefreshInterval).Append("\n");
+			sb.Append("class RealTimePrice {\n");
+			sb.Append("  Time: ").Append(Time).Append("\n");
 			sb.Append("}\n");
 			return sb.ToString();
 		}
@@ -49,7 +40,7 @@ namespace Server.Models {
 		/// Returns the JSON string presentation of the object
 		/// </summary>
 		/// <returns>JSON string presentation of the object</returns>
-		public string ToJson() {
+		public new string ToJson() {
 			return JsonConvert.SerializeObject(this, Formatting.Indented);
 		}
 
@@ -61,28 +52,23 @@ namespace Server.Models {
 		public override bool Equals(object obj) {
 			if (ReferenceEquals(null, obj)) return false;
 			if (ReferenceEquals(this, obj)) return true;
-			return obj.GetType() == GetType() && Equals((Configuration)obj);
+			return obj.GetType() == GetType() && Equals((RealTimePrice)obj);
 		}
 
 		/// <summary>
-		/// Returns true if Configuration instances are equal
+		/// Returns true if RealTimePrice instances are equal
 		/// </summary>
-		/// <param name="other">Instance of Configuration to be compared</param>
+		/// <param name="other">Instance of RealTimePrice to be compared</param>
 		/// <returns>Boolean</returns>
-		public bool Equals(Configuration other) {
+		public bool Equals(RealTimePrice other) {
 			if (ReferenceEquals(null, other)) return false;
 			if (ReferenceEquals(this, other)) return true;
 
 			return
 				(
-					PinnedStocks == other.PinnedStocks ||
-					PinnedStocks != null &&
-					PinnedStocks.SequenceEqual(other.PinnedStocks)
-				) &&
-				(
-					RefreshInterval == other.RefreshInterval ||
-					RefreshInterval != null &&
-					RefreshInterval.Equals(other.RefreshInterval)
+					Time == other.Time ||
+					Time != null &&
+					Time.Equals(other.Time)
 				);
 		}
 
@@ -95,10 +81,8 @@ namespace Server.Models {
 			{
 				var hashCode = 41;
 				// Suitable nullity checks etc, of course :)
-				if (PinnedStocks != null)
-					hashCode = hashCode * 59 + PinnedStocks.GetHashCode();
-				if (RefreshInterval != null)
-					hashCode = hashCode * 59 + RefreshInterval.GetHashCode();
+				if (Time != null)
+					hashCode = hashCode * 59 + Time.GetHashCode();
 				return hashCode;
 			}
 		}
@@ -106,11 +90,11 @@ namespace Server.Models {
 		#region Operators
 #pragma warning disable 1591
 
-		public static bool operator ==(Configuration left, Configuration right) {
+		public static bool operator ==(RealTimePrice left, RealTimePrice right) {
 			return Equals(left, right);
 		}
 
-		public static bool operator !=(Configuration left, Configuration right) {
+		public static bool operator !=(RealTimePrice left, RealTimePrice right) {
 			return !Equals(left, right);
 		}
 

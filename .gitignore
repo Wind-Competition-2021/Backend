@@ -3,9 +3,14 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-/Resource
-/Initiator/Example
-/*.DotSettings
+/*
+!/Initiator
+!/Server
+!/.gitignore
+!/.gitattributes
+!/Stock Quotes.sln
+
+*[Ee]xample*/
 
 # User-specific files
 *.rsuser

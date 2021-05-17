@@ -49,7 +49,7 @@ namespace Initiator {
 
 		protected SessionSettings Settings { get; }
 		protected SocketInitiator SocketInitiator { get; }
-		protected ApplicationWrapper Application { get; }
+		public ApplicationWrapper Application { get; }
 
 		public void Start() => SocketInitiator.Start();
 
@@ -67,10 +67,17 @@ namespace Initiator {
 			return SendMessage(logout, session);
 		}
 
-		public bool RequestMarketData(MarketDataRequestType type = null, SessionID sessionId = null) {
+		public bool RequestMarketData(MarketDataRequestType type = null, DateTime? beginDate = null, DateTime? endDate = null, SessionID sessionId = null) {
+			type ??= MarketDataRequestType.RealTime;
 			var request = new MarketDataRequest {
-				SubscriptionRequestType = (type ?? MarketDataRequestType.RealTime).Type
+				SubscriptionRequestType = type.Type
 			};
+			if (type == MarketDataRequestType.History) {
+				var begin = new TDBeginDate(beginDate ?? throw new ArgumentNullException(nameof(beginDate)));
+				var end = new TDEndDate(endDate ?? throw new ArgumentNullException(nameof(endDate)));
+				request.SetField(begin);
+				request.SetField(end);
+			}
 			return SendMessage(request, sessionId ?? DefaultSession);
 		}
 

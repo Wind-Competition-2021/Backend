@@ -7,11 +7,13 @@ namespace Initiator {
 			StockQuotesInitiator initiator = new() {
 				Echo = ApplicationWrapper.EchoType.All
 			};
+			initiator.EchoBlacklist.Clear();
 			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
-			initiator.LogOut();
+			//initiator.LogOut();
 			initiator.LogIn();
-			initiator.UntilLoggedIn(interval: 200).ContinueWith(_ => initiator.RequestMarketData(MarketDataRequestType.PlayBack));
+			//initiator.RequestMarketData(MarketDataRequestType.History, new DateTime(2021, 5, 6), new DateTime(2021, 5, 7));
+			initiator.Application.SessionLoggedIn += (sender, e) => { initiator.RequestMarketData(MarketDataRequestType.RealTime); };
 		}
 	}
 }
