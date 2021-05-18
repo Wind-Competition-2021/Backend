@@ -6,6 +6,8 @@
 /*
 !/Initiator
 !/Server
+!/Fetcher
+Venv/
 !/.gitignore
 !/.gitattributes
 !/Stock Quotes.sln
