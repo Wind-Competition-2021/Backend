@@ -5,7 +5,17 @@ from datetime import date as Date
 from pandas.core.frame import DataFrame
 import baostock as BaoStock
 import sys as System
+import os as OS
 import json as Json
+
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = System.stdout
+        System.stdout = open(OS.devnull, 'w')
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        System.stdout.close()
+        System.stdout = self._original_stdout
 
 priceMapper: Callable[[str], int] = lambda x: int(float(x)*10000)
 intMapper: Callable[[str], int] = lambda x: int(x)
@@ -110,7 +120,7 @@ def getStockInfo(id: str):
     return {getStockInfoKeyMap[key]: data1.at[0, key] for key in data1.keys() if key in getStockInfoKeyMap} | {getStockInfoKeyMap[key]: data2.at[0, key] for key in data2.keys() if key in getStockInfoKeyMap}
 
 
-def getStockList(type: str, date: str = ""):
+def getStockList(type: str = "default", date: str = ""):
     result = []
     data: DataFrame
     if type == "sz50":
@@ -122,10 +132,11 @@ def getStockList(type: str, date: str = ""):
     else:
         data = BaoStock.query_stock_basic().get_data()
         keys = data.keys()
+        data = [x[1] for x in BaoStock.query_stock_basic().get_data().iterrows()]
         if type == "index":
-            data = [x[1] for x in data.iterrows() if x[1]["type"] == "2"]
+            data = [x for x in data if x["type"] == "2"]
         elif type == "stock":
-            data = [x[1] for x in data.iterrows() if x[1]["type"] == "1"]
+            data = [x for x in data if x["type"] == "1"]
         for row in data:
             result.append({getStockListKeyMap[key]: row[key] for key in keys if key in getStockListKeyMap})
         return result
@@ -140,7 +151,7 @@ def getMinutelyPrice(id: str, beginDate: str, endDate: str, frequency: str = "60
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getMinutelyPriceKeyMap.keys()), beginDate, endDate, frequency, rehabilitation).get_data()
     for row in data.iterrows():
-        dataRow = {getMinutelyPriceKeyMap[key]: getMinutelyPriceValueMap[key](row[key]) if key in getMinutelyPriceValueMap else row[key]
+        dataRow = {getMinutelyPriceKeyMap[key]: getMinutelyPriceValueMap[key](row[1][key]) if key in getMinutelyPriceValueMap else row[1][key]
                    for key in data.keys() if key in getMinutelyPriceKeyMap}
         dataRow["id"] = id
         result.append(dataRow)
@@ -153,7 +164,7 @@ def getDailyPrice(id: str, beginDate: str, endDate: str, rehabilitation: Literal
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getDailyPriceKeyMap.keys()), beginDate, endDate, "d", rehabilitation).get_data()
     for row in data.iterrows():
-        dataRow = {getDailyPriceKeyMap[key]: getDailyPriceValueMap[key](row[key]) if key in getDailyPriceValueMap else row[key]
+        dataRow = {getDailyPriceKeyMap[key]: getDailyPriceValueMap[key](row[1][key]) if key in getDailyPriceValueMap else row[1][key]
                    for key in data.keys() if key in getDailyPriceKeyMap}
         dataRow["id"] = id
         result.append(dataRow)
@@ -166,7 +177,7 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getWeeklyPriceKeyMap.keys()), beginDate, endDate, "w" if frequency == "week" else "m", rehabilitation).get_data()
     for row in data.iterrows():
-        dataRow = {getWeeklyPriceKeyMap[key]: getWeeklyPriceValueMap[key](row[key]) if key in getWeeklyPriceValueMap else row[key]
+        dataRow = {getWeeklyPriceKeyMap[key]: getWeeklyPriceValueMap[key](row[1][key]) if key in getWeeklyPriceValueMap else row[1][key]
                    for key in data.keys() if key in getWeeklyPriceKeyMap}
         dataRow["id"] = id
         result.append(dataRow)
@@ -174,7 +185,8 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
 
 
 if __name__ == "__main__":
-    login = BaoStock.login()
+    with HiddenPrints():
+        login = BaoStock.login()
     if login.error_code != "0":
         raise Error("Connection failed")
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
@@ -185,18 +197,19 @@ if __name__ == "__main__":
         args = args[1:]
         result: str = ""
         if operation == "getStockList":
-            result = Json.dumps(getStockList(*args))
+            result = getStockList(*args)
         elif operation == "getStockInfo":
-            result = Json.dumps(getStockInfo(*args))
+            result = getStockInfo(*args)
         elif operation == "getMinutelyPrice":
-            result = Json.dumps(getMinutelyPrice(*args))
+            result = getMinutelyPrice(*args)
         elif operation == "getDailyPrice":
-            result = Json.dumps(getDailyPrice(*args))
+            result = getDailyPrice(*args)
         elif operation == "getWeeklyPrice":
-            result = Json.dumps(getWeeklyPrice(*args))
+            result = getWeeklyPrice(*args)
         elif operation == "exit":
-            BaoStock.logout()
+            with HiddenPrints():
+                BaoStock.logout()
             break
-        System.stdout.write(result)
+        System.stdout.write(Json.dumps(result,ensure_ascii=False))
         System.stdout.write("\n")
         System.stdout.flush()
