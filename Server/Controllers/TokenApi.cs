@@ -9,8 +9,8 @@
  */
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Server.Attributes;
+using Server.Managers;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace Server.Controllers {
@@ -20,27 +20,26 @@ namespace Server.Controllers {
 	public class TokenApiController : ControllerBase {
 		/// <summary>
 		/// </summary>
+		/// <param name="manager"></param>
+		public TokenApiController(ConfigManager manager) => ConfigManager = manager;
+
+		/// <summary>
+		/// </summary>
+		public ConfigManager ConfigManager { get; }
+
+		/// <summary>
+		/// </summary>
 		/// <remarks>Get a new token</remarks>
 		/// <response code="201">The new token has been created and returned</response>
 		/// <response code="500">Unknown error on server</response>
-		[HttpGet]
-		[Route("/truemogician/StockQuote/0.1/api/token")]
+		[HttpGet("/api/token")]
 		[ValidateModelState]
 		[SwaggerOperation("GetToken")]
 		[SwaggerResponse(201, type: typeof(string), description: "The new token has been created and returned")]
 		public virtual IActionResult GetToken() {
-			//TODO: Uncomment the next line to return response 201 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-			// return StatusCode(201, default(string));
-
-			//TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-			// return StatusCode(500);
-			string exampleJson = null;
-			exampleJson = "\"\"";
-
-			var example = exampleJson != null
-				? JsonConvert.DeserializeObject<string>(exampleJson)
-				: default;//TODO: Change the data returned
-			return new ObjectResult(example);
+			var newToken = ConfigManager.GetNewToken();
+			ConfigManager.Add(newToken);
+			return StatusCode(201, newToken);
 		}
 
 		/// <summary>
@@ -49,24 +48,10 @@ namespace Server.Controllers {
 		/// <param name="token"></param>
 		/// <response code="200">Validation completed</response>
 		/// <response code="500">Unknown error on server</response>
-		[HttpGet]
-		[Route("/truemogician/StockQuote/0.1/api/token/validation")]
+		[HttpGet("/api/token/validation")]
 		[ValidateModelState]
 		[SwaggerOperation("ValidateToken")]
 		[SwaggerResponse(200, type: typeof(bool?), description: "Validation completed")]
-		public virtual IActionResult ValidateToken([FromQuery] [Required] string token) {
-			//TODO: Uncomment the next line to return response 200 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-			// return StatusCode(200, default(bool?));
-
-			//TODO: Uncomment the next line to return response 500 or use other options such as return this.NotFound(), return this.BadRequest(..), ...
-			// return StatusCode(500);
-			string exampleJson = null;
-			exampleJson = "true";
-
-			var example = exampleJson != null
-				? JsonConvert.DeserializeObject<bool?>(exampleJson)
-				: default;//TODO: Change the data returned
-			return new ObjectResult(example);
-		}
+		public virtual IActionResult ValidateToken([FromQuery] [Required] string token) => Ok(ConfigManager.Contains(token));
 	}
 }
