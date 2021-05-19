@@ -6,6 +6,8 @@
 /*
 !/Initiator
 !/Server
+wwwroot/
+Temp/
 !/Fetcher
 Venv/
 !/.gitignore

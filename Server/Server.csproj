@@ -2,7 +2,7 @@
   <PropertyGroup>
 	<Description>Stock quotes server</Description>
 	<Copyright>true_mogician</Copyright>
-	<TargetFramework>netcoreapp3.1</TargetFramework>
+	<TargetFramework>net5.0</TargetFramework>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<PreserveCompilationContext>true</PreserveCompilationContext>
 	<LangVersion>latest</LangVersion>
@@ -10,13 +10,31 @@
 	<PackageId>Server</PackageId>
   </PropertyGroup>
   <ItemGroup>
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1"/>
-	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="5.5.1"/>
-	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="5.5.1"/>
-	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="5.5.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.5.1"/>
+    <Content Remove="Properties\launchSettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <_WebToolingArtifacts Remove="Properties\launchSettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+	<PackageReference Include="Colorful.Console" Version="1.2.15" />
+	<PackageReference Include="Python.Runtime.AllPlatforms" Version="3.7.2.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.1.4" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.1.4" />
   </ItemGroup>
   <ItemGroup>
 	<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\launchSettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 </Project>
