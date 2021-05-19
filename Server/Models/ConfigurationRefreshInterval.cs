@@ -60,8 +60,8 @@ namespace Server.Models {
 		public override string ToString() {
 			var sb = new StringBuilder();
 			sb.Append("class ConfigurationRefreshInterval {\n");
-			sb.Append("  _List: ").Append(List).Append("\n");
-			sb.Append("  Single: ").Append(Single).Append("\n");
+			sb.Append("  _List: ").Append(List).Append('\n');
+			sb.Append("  Single: ").Append(Single).Append('\n');
 			sb.Append("}\n");
 			return sb.ToString();
 		}
