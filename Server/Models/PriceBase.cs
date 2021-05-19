@@ -51,13 +51,13 @@ namespace Server.Models {
 		///     Gets or Sets Volume
 		/// </summary>
 		[DataMember(Name = "volume")]
-		public int? Volume { get; set; }
+		public long? Volume { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Turnover
 		/// </summary>
 		[DataMember(Name = "turnover")]
-		public int? Turnover { get; set; }
+		public long? Turnover { get; set; }
 
 		/// <summary>
 		///     Returns true if PriceBase instances are equal
