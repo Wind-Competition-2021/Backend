@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using static Initiator.StockQuotesInitiator;
 
 namespace Initiator {
@@ -10,10 +12,20 @@ namespace Initiator {
 			initiator.EchoBlacklist.Clear();
 			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
-			//initiator.LogOut();
 			initiator.LogIn();
-			//initiator.RequestMarketData(MarketDataRequestType.History, new DateTime(2021, 5, 6), new DateTime(2021, 5, 7));
-			initiator.Application.SessionLoggedIn += (sender, e) => { initiator.RequestMarketData(MarketDataRequestType.RealTime); };
+			initiator.UntilLoggedIn()
+				.ContinueWith(
+					_ => {
+						initiator.RequestMarketData(MarketDataRequestType.PlayBack);
+						Task.Delay(TimeSpan.FromSeconds(10))
+							.ContinueWith(
+								_ => {
+									initiator.LogOut();
+									initiator.Stop();
+								}
+							);
+					}
+				);
 		}
 	}
 }
