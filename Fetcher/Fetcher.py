@@ -8,6 +8,7 @@ import sys as System
 import os as OS
 import json as Json
 
+
 class HiddenPrints:
     def __enter__(self):
         self._original_stdout = System.stdout
@@ -17,10 +18,11 @@ class HiddenPrints:
         System.stdout.close()
         System.stdout = self._original_stdout
 
+
 priceMapper: Callable[[str], int] = lambda x: int(float(x)*10000)
 intMapper: Callable[[str], int] = lambda x: int(x)
 timeMapper: Callable[[
-    str], str] = lambda time: f"{time[0:4]}-{time[4:2]}-{time[6:2]}T{time[8:2]}:{time[10:2]}:{time[12:2]}.{time[14:3]}Z"
+    str], str] = lambda time: f"{time[0:4]}-{time[4:6]}-{time[6:8]}T{time[8:10]}:{time[10:12]}:{time[12:14]}.{time[14:]}Z"
 rehabilitationMapper: Callable[[
     str], str] = lambda x: "1" if x == "pre" else "2" if x == "post" else "3"
 
@@ -132,16 +134,19 @@ def getStockList(type: str = "default", date: str = ""):
     else:
         data = BaoStock.query_stock_basic().get_data()
         keys = data.keys()
-        data = [x[1] for x in BaoStock.query_stock_basic().get_data().iterrows()]
+        data = [x[1]
+                for x in BaoStock.query_stock_basic().get_data().iterrows()]
         if type == "index":
             data = [x for x in data if x["type"] == "2"]
         elif type == "stock":
             data = [x for x in data if x["type"] == "1"]
         for row in data:
-            result.append({getStockListKeyMap[key]: row[key] for key in keys if key in getStockListKeyMap})
+            result.append({getStockListKeyMap[key]: row[key]
+                          for key in keys if key in getStockListKeyMap})
         return result
     for row in data.iterrows():
-        result.append({getStockListKeyMap[key]: row[1][key] for key in data.keys() if key in getStockListKeyMap})
+        result.append({getStockListKeyMap[key]: row[1][key]
+                      for key in data.keys() if key in getStockListKeyMap})
     return result
 
 
@@ -184,6 +189,10 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
     return result
 
 
+def checkTradeStatus(date: str):
+    return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
+
+
 if __name__ == "__main__":
     with HiddenPrints():
         login = BaoStock.login()
@@ -206,10 +215,13 @@ if __name__ == "__main__":
             result = getDailyPrice(*args)
         elif operation == "getWeeklyPrice":
             result = getWeeklyPrice(*args)
+        elif operation == "checkTradeStatus":
+            result = checkTradeStatus(*args)
         elif operation == "exit":
             with HiddenPrints():
                 BaoStock.logout()
             break
-        System.stdout.write(Json.dumps(result,ensure_ascii=False))
+        json = Json.dumps(result, ensure_ascii=False)
+        System.stdout.write(json)
         System.stdout.write("\n")
         System.stdout.flush()
