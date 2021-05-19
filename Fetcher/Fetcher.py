@@ -1,8 +1,8 @@
 from io import TextIOWrapper
 from typing import Callable, Literal
 from zlib import error as Error
-from datetime import date as Date
 from pandas.core.frame import DataFrame
+from pathlib import Path
 import baostock as BaoStock
 import sys as System
 import os as OS
@@ -20,6 +20,7 @@ class HiddenPrints:
 
 
 priceMapper: Callable[[str], int] = lambda x: int(float(x)*10000)
+rateMapper: Callable[[str], int] = lambda x: int(float(x)*1000000)
 intMapper: Callable[[str], int] = lambda x: int(x)
 timeMapper: Callable[[
     str], str] = lambda time: f"{time[0:4]}-{time[4:6]}-{time[6:8]}T{time[8:10]}:{time[10:12]}:{time[12:14]}.{time[14:]}Z"
@@ -100,6 +101,11 @@ getDailyPriceKeyMap = priceKeyMapBase | {
 }
 getDailyPriceValueMap = priceValueMapBase | {
     "preclose": priceMapper,
+    "turn": rateMapper,
+    "peTTM": rateMapper,
+    "pbMRQ": rateMapper,
+    "psTTM": rateMapper,
+    "pcfNcfTTM": rateMapper,
     "tradestatus": lambda x: x == "0",
     "isST": lambda x: x == "1"
 }
@@ -113,7 +119,9 @@ getWeeklyPriceKeyMap = priceKeyMapBase | {
     "date": "date",
     "turn": "turnoverRate",
 }
-getWeeklyPriceValueMap = priceValueMapBase
+getWeeklyPriceValueMap = priceValueMapBase | {
+    "turn": rateMapper
+}
 
 
 def getStockInfo(id: str):
@@ -131,6 +139,10 @@ def getStockList(type: str = "default", date: str = ""):
         data = BaoStock.query_hs300_stocks(date).get_data()
     elif type == "zz500":
         data = BaoStock.query_zz500_stocks(date).get_data()
+    elif type == "default":
+        path = Path(__file__).parent.absolute()/"list.json"
+        file = open(str(path), "r", encoding="utf8")
+        return Json.loads(file.read())
     else:
         data = BaoStock.query_stock_basic().get_data()
         keys = data.keys()
@@ -201,7 +213,7 @@ if __name__ == "__main__":
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
     System.stdin = TextIOWrapper(System.stdin.buffer, encoding='utf8')
     for line in System.stdin:
-        args = line.strip().split(' ')
+        args = line.strip().split()
         operation = args[0]
         args = args[1:]
         result: str = ""
