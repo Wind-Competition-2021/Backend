@@ -24,12 +24,6 @@ namespace Server.Models {
 		public string Id { get; set; }
 
 		/// <summary>
-		///     Gets or Sets PreClosing
-		/// </summary>
-		[DataMember(Name = "preClosing")]
-		public int? PreClosing { get; set; }
-
-		/// <summary>
 		///     Gets or Sets Opening
 		/// </summary>
 		[DataMember(Name = "opening")]
@@ -83,11 +77,6 @@ namespace Server.Models {
 					Id.Equals(other.Id)
 				) &&
 				(
-					PreClosing == other.PreClosing ||
-					PreClosing != null &&
-					PreClosing.Equals(other.PreClosing)
-				) &&
-				(
 					Opening == other.Opening ||
 					Opening != null &&
 					Opening.Equals(other.Opening)
@@ -126,14 +115,13 @@ namespace Server.Models {
 		public override string ToString() {
 			var sb = new StringBuilder();
 			sb.Append("class PriceBase {\n");
-			sb.Append("  Id: ").Append(Id).Append("\n");
-			sb.Append("  PreClosing: ").Append(PreClosing).Append("\n");
-			sb.Append("  Opening: ").Append(Opening).Append("\n");
-			sb.Append("  Closing: ").Append(Closing).Append("\n");
-			sb.Append("  Highest: ").Append(Highest).Append("\n");
-			sb.Append("  Lowest: ").Append(Lowest).Append("\n");
-			sb.Append("  Volume: ").Append(Volume).Append("\n");
-			sb.Append("  Turnover: ").Append(Turnover).Append("\n");
+			sb.Append("  Id: ").Append(Id).Append('\n');
+			sb.Append("  Opening: ").Append(Opening).Append('\n');
+			sb.Append("  Closing: ").Append(Closing).Append('\n');
+			sb.Append("  Highest: ").Append(Highest).Append('\n');
+			sb.Append("  Lowest: ").Append(Lowest).Append('\n');
+			sb.Append("  Volume: ").Append(Volume).Append('\n');
+			sb.Append("  Turnover: ").Append(Turnover).Append('\n');
 			sb.Append("}\n");
 			return sb.ToString();
 		}
@@ -150,7 +138,7 @@ namespace Server.Models {
 		/// <param name="obj">Object to be compared</param>
 		/// <returns>Boolean</returns>
 		public override bool Equals(object obj) {
-			if (ReferenceEquals(null, obj))
+			if (obj is null)
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
@@ -168,8 +156,6 @@ namespace Server.Models {
 				// Suitable nullity checks etc, of course :)
 				if (Id != null)
 					hashCode = hashCode * 59 + Id.GetHashCode();
-				if (PreClosing != null)
-					hashCode = hashCode * 59 + PreClosing.GetHashCode();
 				if (Opening != null)
 					hashCode = hashCode * 59 + Opening.GetHashCode();
 				if (Closing != null)
