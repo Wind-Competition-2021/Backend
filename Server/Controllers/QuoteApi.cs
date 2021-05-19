@@ -54,8 +54,8 @@ namespace Server.Controllers {
 		/// </summary>
 		/// <remarks>Get the price summary of a stock</remarks>
 		/// <param name="id"></param>
-		/// <param name="beginDate"></param>
-		/// <param name="endDate"></param>
+		/// <param name="begin"></param>
+		/// <param name="end"></param>
 		/// <param name="rehabilitation">Rehabilitation status, default value is \&quot;none\&quot;</param>
 		/// <response code="200">Get the quote of a stock every trading day</response>
 		/// <response code="400">Invalid parameters or payload</response>
@@ -67,14 +67,14 @@ namespace Server.Controllers {
 		public virtual IActionResult GetDailyPrice(
 			[FromQuery] [Required] [RegularExpression(@"[a-zA-Z]{2}\.\d{6}")]
 			string id,
-			[FromQuery] DateTime? beginDate,
-			[FromQuery] DateTime? endDate,
+			[FromQuery] DateTime? begin,
+			[FromQuery] DateTime? end,
 			[FromQuery] string rehabilitation
 		) {
 			DailyPrice[] result;
-			var now = DateTime.Now;
+			end ??= DateTime.Now;
 			lock (Fetcher) {
-				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {beginDate ?? now - TimeSpan.FromDays(30):yyyy-MM-dd} {endDate ?? now:yyyy-MM-dd} {rehabilitation ?? "none"}");
+				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {begin ?? end - TimeSpan.FromDays(30):yyyy-MM-dd} {end:yyyy-MM-dd} {rehabilitation ?? "none"}");
 				var raw = Fetcher.StandardOutput.ReadLine();
 				result = JsonConvert.DeserializeObject<DailyPrice[]>(raw);
 			}
