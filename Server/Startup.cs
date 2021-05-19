@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Initiator;
 using Microsoft.AspNetCore.Authentication;
@@ -117,6 +118,8 @@ namespace Server {
 
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator(@"..\Initiator\Config\Initiator.cfg");
+			initiator.EchoBlacklist.Clear();
+			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
 			initiator.LogIn();
 			services.AddSingleton(initiator);
