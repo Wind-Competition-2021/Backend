@@ -3,6 +3,7 @@ from typing import Callable, Literal
 from zlib import error as Error
 from pandas.core.frame import DataFrame
 from pathlib import Path
+from datetime import datetime as DateTime, time as Time
 import baostock as BaoStock
 import sys as System
 import os as OS
@@ -200,8 +201,11 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
         result.append(dataRow)
     return result
 
-
-def checkTradeStatus(date: str):
+startTime = Time(9,30)
+endTime = Time(15)
+def checkTradeStatus(date: str = ""):
+    if date == "" & (DateTime.now().time() < startTime | DateTime.now().time()>endTime):
+        return "false"
     return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
 
 
