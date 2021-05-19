@@ -26,7 +26,7 @@ intMapper: Callable[[str], int] = lambda x: int(x)
 timeMapper: Callable[[
     str], str] = lambda time: f"{time[0:4]}-{time[4:6]}-{time[6:8]}T{time[8:10]}:{time[10:12]}:{time[12:14]}.{time[14:]}Z"
 rehabilitationMapper: Callable[[
-    str], str] = lambda x: "1" if x == "pre" else "2" if x == "post" else "3"
+    str], str] = lambda x: "1" if x == "post" else "2" if x == "pre" else "3"
 
 priceKeyMapBase = {
     "open": "opening",
@@ -60,6 +60,10 @@ getStockInfoKeyMap = {
     "type": "type",
     "industry": "industry",
     "industryClassification": "classification"
+}
+
+getStockInfoValueMap = {
+    "type": lambda x: "stock" if x == "1" else "index" if x == "2" else "other"
 }
 
 
@@ -128,7 +132,7 @@ getWeeklyPriceValueMap = priceValueMapBase | {
 def getStockInfo(id: str):
     data1 = BaoStock.query_stock_basic(id).get_data()
     data2 = BaoStock.query_stock_industry(id).get_data()
-    return {getStockInfoKeyMap[key]: data1.at[0, key] for key in data1.keys() if key in getStockInfoKeyMap} | {getStockInfoKeyMap[key]: data2.at[0, key] for key in data2.keys() if key in getStockInfoKeyMap}
+    return {getStockInfoKeyMap[key]: getStockInfoValueMap[key](data1.at[0, key]) if key in getStockInfoValueMap else data1.at[0, key] for key in data1.keys() if key in getStockInfoKeyMap} | {getStockInfoKeyMap[key]: data2.at[0, key] for key in data2.keys() if key in getStockInfoKeyMap}
 
 
 def getStockList(type: str = "default", date: str = ""):
@@ -165,7 +169,7 @@ def getStockList(type: str = "default", date: str = ""):
 
 def getMinutelyPrice(id: str, beginDate: str, endDate: str, frequency: str = "60", rehabilitation: Literal["pre", "post", "none"] = "none"):
     result = []
-    rehabilitation = rehabilitation == "1" if rehabilitation == "pre" else "2" if rehabilitation == "post" else "3"
+    rehabilitation = "1" if rehabilitation == "post" else "2" if rehabilitation == "pre" else "3"
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getMinutelyPriceKeyMap.keys()), beginDate, endDate, frequency, rehabilitation).get_data()
     for row in data.iterrows():
@@ -178,7 +182,7 @@ def getMinutelyPrice(id: str, beginDate: str, endDate: str, frequency: str = "60
 
 def getDailyPrice(id: str, beginDate: str, endDate: str, rehabilitation: Literal["pre", "post", "none"] = "none"):
     result = []
-    rehabilitation = rehabilitation == "1" if rehabilitation == "pre" else "2" if rehabilitation == "post" else "3"
+    rehabilitation = "1" if rehabilitation == "post" else "2" if rehabilitation == "pre" else "3"
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getDailyPriceKeyMap.keys()), beginDate, endDate, "d", rehabilitation).get_data()
     for row in data.iterrows():
@@ -191,7 +195,7 @@ def getDailyPrice(id: str, beginDate: str, endDate: str, rehabilitation: Literal
 
 def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week", rehabilitation: Literal["pre", "post", "none"] = "none"):
     result = []
-    rehabilitation = rehabilitation == "1" if rehabilitation == "pre" else "2" if rehabilitation == "post" else "3"
+    rehabilitation = "1" if rehabilitation == "post" else "2" if rehabilitation == "pre" else "3"
     data = BaoStock.query_history_k_data_plus(
         id, ",".join(getWeeklyPriceKeyMap.keys()), beginDate, endDate, "w" if frequency == "week" else "m", rehabilitation).get_data()
     for row in data.iterrows():
@@ -201,10 +205,13 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
         result.append(dataRow)
     return result
 
-startTime = Time(9,30)
+
+startTime = Time(9, 30)
 endTime = Time(15)
+
+
 def checkTradeStatus(date: str = ""):
-    if date == "" and (DateTime.now().time() < startTime or DateTime.now().time()>endTime):
+    if date == "" and (DateTime.now().time() < startTime or DateTime.now().time() > endTime):
         return "false"
     return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
 
