@@ -10,10 +10,10 @@
 	<PackageId>Server</PackageId>
   </PropertyGroup>
   <ItemGroup>
-    <Content Remove="Properties\launchSettings.json" />
+	<Content Remove="Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>
-    <_WebToolingArtifacts Remove="Properties\launchSettings.json" />
+	<_WebToolingArtifacts Remove="Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>
 	<PackageReference Include="Colorful.Console" Version="1.2.15" />
@@ -28,13 +28,16 @@
 	<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\launchSettings.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </None>
+	<None Include="Properties\launchSettings.json">
+	  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	  <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+	</None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+	<Folder Include="wwwroot\" />
+  </ItemGroup>
+  <ItemGroup>
+	<ProjectReference Include="..\Initiator\Initiator.csproj" />
   </ItemGroup>
 </Project>
