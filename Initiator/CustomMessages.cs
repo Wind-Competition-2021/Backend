@@ -5,6 +5,20 @@ namespace QuickFix.FIX44 {
 		public const string MsgType = "TD";
 		public TDFData() => Header.SetField(new MsgType(MsgType));
 
+		public TDFData(QuickFix.Message message) {
+			// get all base class properties
+			var properties = typeof(Message).GetProperties();
+			foreach (var bp in properties) {
+				// get derived matching property
+				var dp = typeof(TDFData).GetProperty(bp.Name, bp.PropertyType);
+
+				// this property must not be index property
+				if (dp != null && dp.GetSetMethod() != null && bp.GetIndexParameters().Length == 0 && dp.GetIndexParameters().Length == 0)
+					dp.SetValue(this, dp.GetValue(message, null), null);
+			}
+			Header.SetField(new MsgType(MsgType));
+		}
+
 		public WindCode WindCode {
 			get {
 				WindCode windCode = new();

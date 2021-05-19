@@ -34,7 +34,7 @@ namespace Initiator {
 
 	public delegate void MessageEventHandler(object sender, MessageEventArgs e);
 
-	public class ApplicationWrapper : MessageCracker, ITransmissionAnalysis, IApplication {
+	public class ApplicationWrapper : ITransmissionAnalysis, IApplication {
 		#region Enums
 		[Flags]
 		public enum EchoType : byte {
@@ -209,7 +209,6 @@ namespace Initiator {
 			Console.Write("<-- ", Color.Gold);
 			Console.Write($"[{type.Obj}]", Color.MediumSpringGreen);
 			message.Print();
-			Crack(message, sessionId);
 		}
 
 		public async Task UntilLoggedIn(SessionID sessionId, int interval = 1000, int timeout = -1) {

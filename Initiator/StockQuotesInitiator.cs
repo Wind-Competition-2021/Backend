@@ -20,14 +20,14 @@ namespace Initiator {
 			Application.MessageReceived += (sender, e) => {
 				if (e.Message.Header.GetString(35) != TDFData.MsgType)
 					return;
-				var message = e.Message as TDFData;
+				TDFData message = new(e.Message);
 				Stock newStock = new(message!.WindCode.Obj);
 				if (Stocks.TryGetValue(newStock, out var stock))
-					stock.Quotes.Enqueue(new Stock.Quote(message));
+					stock.Quotes.Add(new Quote(message));
 				else {
-					stock!.Quotes.Enqueue(new Stock.Quote(message));
+					stock!.Quotes.Add(new Quote(message));
 					Stocks.Add(newStock);
-					Console.WriteLine($"Market: {newStock.Market.Code} Id: {newStock.Id}");
+					Console.WriteLine($"Id: {newStock.Id}");
 				}
 			};
 			SocketInitiator = new SocketInitiator(Application, storeFactory, Settings, logFactory, messageFactory);
