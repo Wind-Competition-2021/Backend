@@ -56,7 +56,7 @@ namespace Server.Controllers {
 		/// <param name="id"></param>
 		/// <param name="begin"></param>
 		/// <param name="end"></param>
-		/// <param name="rehabilitation">Rehabilitation status, default value is \&quot;none\&quot;</param>
+		/// <param name="rehabilitation">Rehabilitation status, default value is "none"</param>
 		/// <response code="200">Get the quote of a stock every trading day</response>
 		/// <response code="400">Invalid parameters or payload</response>
 		/// <response code="500">Unknown error on server</response>
@@ -85,10 +85,10 @@ namespace Server.Controllers {
 		/// </summary>
 		/// <remarks>Get the price summary of a stock</remarks>
 		/// <param name="id"></param>
-		/// <param name="beginDate"></param>
-		/// <param name="endDate"></param>
+		/// <param name="begin"></param>
+		/// <param name="end"></param>
 		/// <param name="frequency">Frequency of the quotes</param>
-		/// <param name="rehabilitation">Rehabilitation status, default value is \&quot;none\&quot;</param>
+		/// <param name="rehabilitation">Rehabilitation status, default value is "none"</param>
 		/// <response code="200">Get the quote of a stock every several minutes</response>
 		/// <response code="400">Invalid parameters or payload</response>
 		/// <response code="500">Unknown error on server</response>
@@ -99,15 +99,15 @@ namespace Server.Controllers {
 		public virtual IActionResult GetMinutelyPrice(
 			[FromQuery] [Required] [RegularExpression(@"[a-zA-Z]{2}\.\d{6}")]
 			string id,
-			[FromQuery] DateTime? beginDate,
-			[FromQuery] DateTime? endDate,
+			[FromQuery] DateTime? begin,
+			[FromQuery] DateTime? end,
 			[FromQuery] int? frequency,
 			[FromQuery] string rehabilitation
 		) {
 			MinutelyPrice[] result;
 			var now = DateTime.Now;
 			lock (Fetcher) {
-				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {beginDate ?? now - TimeSpan.FromDays(7):yyyy-MM-dd} {endDate ?? now:yyyy-MM-dd} {frequency ?? 60} {rehabilitation ?? "none"}");
+				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {begin ?? now - TimeSpan.FromDays(7):yyyy-MM-dd} {end ?? now:yyyy-MM-dd} {frequency ?? 60} {rehabilitation ?? "none"}");
 				var raw = Fetcher.StandardOutput.ReadLine();
 				result = JsonConvert.DeserializeObject<MinutelyPrice[]>(raw);
 			}
@@ -121,7 +121,7 @@ namespace Server.Controllers {
 		/// <param name="begin"></param>
 		/// <param name="end"></param>
 		/// <param name="frequency">Frequency of the quotes</param>
-		/// <param name="rehabilitation">Rehabilitation status, default value is \&quot;none\&quot;</param>
+		/// <param name="rehabilitation">Rehabilitation status, default value is "none"</param>
 		/// <response code="200">Get the quote of a stock every week or month</response>
 		/// <response code="400">Invalid parameters or payload</response>
 		/// <response code="500">Unknown error on server</response>
