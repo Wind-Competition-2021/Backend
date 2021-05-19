@@ -204,7 +204,7 @@ def getWeeklyPrice(id: str, beginDate: str, endDate: str, frequency: str = "week
 startTime = Time(9,30)
 endTime = Time(15)
 def checkTradeStatus(date: str = ""):
-    if date == "" & (DateTime.now().time() < startTime | DateTime.now().time()>endTime):
+    if date == "" and (DateTime.now().time() < startTime or DateTime.now().time()>endTime):
         return "false"
     return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
 
