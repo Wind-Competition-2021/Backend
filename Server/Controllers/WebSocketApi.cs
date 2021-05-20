@@ -7,12 +7,14 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using Initiator;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using QuickFix.Fields;
 using QuickFix.FIX44;
 using Server.Managers;
+using Server.Models;
 using Quote = Initiator.Quote;
 using Timer = System.Timers.Timer;
 
@@ -24,9 +26,11 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="configManager"></param>
+		/// <param name="stockManager"></param>
 		/// <param name="initiator"></param>
-		public WebSocketController(ConfigManager configManager, StockQuotesInitiator initiator) {
+		public WebSocketController(ConfigManager configManager, StockManager stockManager, StockQuotesInitiator initiator) {
 			ConfigManager = configManager;
+			StockManager = stockManager;
 			Initiator = initiator;
 			Initiator.Application.MessageReceived += (_, e) => {
 				MsgType type = new();
@@ -44,11 +48,50 @@ namespace Server.Controllers {
 
 		/// <summary>
 		/// </summary>
-		public StockManager StockManager { get; private set; }
+		public StockManager StockManager { get; }
 
 		/// <summary>
 		/// </summary>
 		public StockQuotesInitiator Initiator { get; }
+
+		/// <summary>
+		/// </summary>
+		/// <returns></returns>
+		[HttpGet("/api/ws/stock/list")]
+		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
+		public Task<IActionResult> UpdateStockList([FromQuery] [Required] string token)
+			=> UpdateQuotes(
+				token,
+				(webSocket, config) => {
+					var prices = StockManager.GetList(token);
+					if (prices == null || prices.Count == 0)
+						return null;
+					foreach (var price in prices)
+						price.Pinned = config.PinnedStocks.Contains(price.Id);
+					return webSocket.SendAsync(prices.ToArray());
+				},
+				config => config.RefreshInterval.List!.Value * 1000
+			);
+
+		/// <summary>
+		/// </summary>
+		/// <returns></returns>
+		[HttpGet("/api/ws/stock")]
+		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
+		public Task<IActionResult> UpdateStock([FromQuery] [Required] string token, [FromQuery] [Required] string id)
+			=> UpdateQuotes(
+				token,
+				(webSocket, config) => {
+					var prices = StockManager.GetSingle(token, id);
+					if (prices == null || prices.Count == 0)
+						return null;
+					List<Task> tasks = new(prices.Count);
+					foreach (var price in prices)
+						price.Pinned = config.PinnedStocks.Contains(id);
+					return webSocket.SendAsync(prices.ToArray());
+				},
+				config => config.RefreshInterval.Single!.Value * 1000
+			);
 
 		/// <summary>
 		/// </summary>
@@ -63,108 +106,37 @@ namespace Server.Controllers {
 			return await reader.ReadToEndAsync();
 		}
 
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
-		[HttpGet("/api/ws/stock/list")]
-		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public async Task<IActionResult> StartStockListUpdating([FromQuery] [Required] string token) {
+		private async Task<IActionResult> UpdateQuotes(string token, Func<WebSocket, Configuration, Task> getTasks, Func<Configuration, int> getInterval) {
 			if (!HttpContext.WebSockets.IsWebSocketRequest) {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 				return BadRequest("Not a websocket request");
 			}
-			var config = ConfigManager[token];
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 			var messageSender = new Timer {
-				Interval = config.RefreshInterval.Single!.Value,
+				Interval = getInterval(ConfigManager[token]),
 				AutoReset = false
 			};
 			var lastElapsedFinished = true;
-			messageSender.Elapsed += (_, _) => {
-				if (!lastElapsedFinished || StockManager == null)
-					goto ResetTimer;
-				var prices = StockManager.GetList(token);
-				if (prices == null || prices.Count == 0)
-					goto ResetTimer;
-				foreach (var price in prices)
-					price.Pinned = config.PinnedStocks.Contains(price.Id);
-				lastElapsedFinished = false;
-				webSocket.SendAsync(prices.ToArray()).ContinueWith(_ => lastElapsedFinished = true);
-			ResetTimer:
-				messageSender.Interval = config.RefreshInterval.Single!.Value;
-				messageSender.Start();
-			};
-			messageSender.Start();
-			var receive = webSocket.Listen(
-				(text, type) => {
-					if (type != WebSocketMessageType.Text)
-						return;
-					try {
-						var ids = JsonConvert.DeserializeObject<string[]>(text);
-						StockManager = new StockManager(ids);
-					}
-					catch (Exception) {
-						// ignored
-					}
-				}
-			);
-			var send = Task.Run(
-				async () => {
-					while (StockManager?.Stopped != true)
-						await Task.Delay(TimeSpan.FromMinutes(1));
-					return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, "Trade Off");
-				}
-			);
-			var result = (await Task.WhenAny(new[] {receive, send})).Result;
-			messageSender.Close();
-			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
-			return new EmptyResult();
-		}
-
-		/// <summary>
-		/// </summary>
-		/// <returns></returns>
-		[HttpGet("/api/ws/stock")]
-		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public async Task<IActionResult> StartStockUpdating([FromQuery] [Required] string token, [FromQuery] [Required] string id) {
-			if (!HttpContext.WebSockets.IsWebSocketRequest) {
-				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-				return BadRequest("Not a websocket request");
-			}
-			var config = ConfigManager[token];
-			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-			var messageSender = new Timer {
-				Interval = config.RefreshInterval.Single!.Value,
-				AutoReset = false
-			};
-			var lastElapsedFinished = true;
-			messageSender.Elapsed += (_, _) => {
+			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
 				if (StockManager?.Stopped == true)
 					return;
-				if (!lastElapsedFinished || StockManager == null)
+				if (!lastElapsedFinished || StockManager?.Initialized != true)
 					goto ResetTimer;
-				var prices = StockManager.GetSingle(token, id);
-				if (prices == null || prices.Count == 0)
-					goto ResetTimer;
-				List<Task> tasks = new(prices.Count);
-				foreach (var price in prices) {
-					price.Pinned = config.PinnedStocks.Contains(id);
-					tasks.Add(webSocket.SendAsync(price));
-				}
-				lastElapsedFinished = true;
-				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
+				var task = getTasks(webSocket, ConfigManager[token]);
+				task?.ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
-				messageSender.Interval = config.RefreshInterval.Single!.Value;
+				messageSender.Interval = getInterval(ConfigManager[token]);
 				messageSender.Start();
-			};
-			messageSender.Start();
+			}
+			messageSender.Elapsed += Elapsed;
+			Elapsed(null, null);
 			var receive = webSocket.Listen(
-				(text, type) => {
+				async (text, type) => {
 					if (type != WebSocketMessageType.Text)
 						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
-						StockManager = new StockManager(ids);
+						await StockManager.Initialize(ids);
 					}
 					catch (Exception) {
 						// ignored
@@ -256,6 +228,20 @@ namespace Server.Controllers {
 		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Action<string, WebSocketMessageType> onReceived = null) {
 			var (result, buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
 			onReceived?.Invoke(Encoding.UTF8.GetString(buffer), result.MessageType);
+			if (!result.CloseStatus.HasValue)
+				result = await webSocket.Listen(onReceived);
+			return result;
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="webSocket"></param>
+		/// <param name="onReceived"></param>
+		/// <returns></returns>
+		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Func<string, WebSocketMessageType, Task> onReceived = null) {
+			var (result, buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
+			if (onReceived != null)
+				await onReceived(Encoding.UTF8.GetString(buffer), result.MessageType);
 			if (!result.CloseStatus.HasValue)
 				result = await webSocket.Listen(onReceived);
 			return result;

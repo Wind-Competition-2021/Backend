@@ -14,59 +14,16 @@ namespace Server.Managers {
 	public class StockManager {
 		/// <summary>
 		/// </summary>
-		/// <param name="ids"></param>
-		public StockManager(string[] ids) : this(ids, TimeSpan.FromSeconds(10)) { }
+		public StockManager() : this(TimeSpan.FromSeconds(3)) { }
 
 		/// <summary>
 		/// </summary>
-		/// <param name="ids"></param>
 		/// <param name="interval"></param>
-		public StockManager(string[] ids, TimeSpan interval) {
-			foreach (var id in ids)
-				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
-			Timer = new Timer(interval.TotalMilliseconds);
-			var lastElapsedFinished = true;
-			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15)) {
-					Timer.Stop();
-					Stopped = true;
-				}
-				if (!lastElapsedFinished)
-					return;
-				var tasks = new List<Task>(Quotes.Count);
-				foreach (var stock in Quotes) {
-					var id = stock.Key;
-					var (playBack, recent) = stock.Value;
-					tasks.Add(
-						GetRealTimeQuote(id)
-							.ContinueWith(
-								task => {
-									var result = task.Result;
-									playBack.AddRange(result);
-									recent.Clear();
-								}
-							)
-					);
-				}
-				lastElapsedFinished = false;
-				Task.WhenAll(tasks)
-					.ContinueWith(
-						_ =>
-							lastElapsedFinished = true
-					);
-			}
-			Timer.Elapsed += Elapsed;
-			GetRealTimeQuote(ids)
-				.ContinueWith(
-					task => {
-						var result = task.Result;
-						for (var i = 0; i < ids.Length; ++i)
-							Quotes[ids[i]].PlayBack.Add(result[i]);
-						Timer.Start();
-					}
-				)
-				.Wait();
-		}
+		public StockManager(TimeSpan interval) => Timer = new Timer(interval.TotalMilliseconds);
+
+		/// <summary>
+		/// </summary>
+		public bool Initialized { get; private set; }
 
 		/// <summary>
 		/// </summary>
@@ -106,7 +63,8 @@ namespace Server.Managers {
 		/// <param name="ids"></param>
 		/// <returns></returns>
 		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
-			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			var uri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			//var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			var raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
@@ -138,6 +96,56 @@ namespace Server.Managers {
 
 		/// <summary>
 		/// </summary>
+		/// <param name="ids"></param>
+		/// <returns></returns>
+		public async Task Initialize(string[] ids) {
+			foreach (var id in ids)
+				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
+			var lastElapsedFinished = true;
+			void Elapsed(object sender, ElapsedEventArgs e) {
+				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(23)) {
+					Timer.Stop();
+					Stopped = true;
+				}
+				if (!lastElapsedFinished)
+					return;
+				var tasks = new List<Task>(Quotes.Count);
+				foreach (var stock in Quotes) {
+					var id = stock.Key;
+					var (playBack, recent) = stock.Value;
+					tasks.Add(
+						GetRealTimeQuote(id)
+							.ContinueWith(
+								task => {
+									var result = task.Result;
+									playBack.AddRange(result);
+									recent.Clear();
+								}
+							)
+					);
+				}
+				lastElapsedFinished = false;
+				Task.WhenAll(tasks)
+					.ContinueWith(
+						_ =>
+							lastElapsedFinished = true
+					);
+			}
+			Timer.Elapsed += Elapsed;
+			await GetRealTimeQuote(ids)
+				.ContinueWith(
+					task => {
+						var result = task.Result;
+						for (var i = 0; i < ids.Length; ++i)
+							Quotes[ids[i]].PlayBack.Add(result[i]);
+						Timer.Start();
+						Initialized = true;
+					}
+				);
+		}
+
+		/// <summary>
+		/// </summary>
 		/// <param name="id"></param>
 		/// <returns></returns>
 		public bool Contains(string id) => Quotes.ContainsKey(id);
@@ -154,7 +162,7 @@ namespace Server.Managers {
 		/// <param name="id"></param>
 		/// <returns></returns>
 		public List<RealTimePrice> GetSingle(string token, string id) {
-			if (Stopped)
+			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
 			if (!LastSinglePushTime.ContainsKey(token)) {
@@ -165,10 +173,11 @@ namespace Server.Managers {
 			}
 			var time = LastSinglePushTime[token];
 			var result = Quotes[id]
-				.Recent
+				.Recent.Concat(Quotes[id].PlayBack)
 				.Where(quote => quote.TradingTime >= time)
 				.Select(quote => new RealTimePrice(quote, id))
 				.ToList();
+
 			if (result.Count > 0)
 				LastSinglePushTime[token] = now;
 			return result;
@@ -179,7 +188,7 @@ namespace Server.Managers {
 		/// <param name="token"></param>
 		/// <returns></returns>
 		public List<RealTimePrice> GetList(string token) {
-			if (Stopped)
+			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
 			if (!LastListPushTime.ContainsKey(token)) {

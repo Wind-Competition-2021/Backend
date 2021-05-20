@@ -116,6 +116,10 @@ namespace Server {
 			};
 			services.AddSingleton(process);
 
+			//Inject StockManager
+			var stockManager = new StockManager();
+			services.AddSingleton(stockManager);
+
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator(@"..\Initiator\Config\Initiator.cfg");
 			initiator.DefaultSession = initiator.Sessions.First();
