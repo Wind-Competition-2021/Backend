@@ -11,20 +11,9 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
-    "WSL 2": {
-      "commandName": "WSL2",
-      "launchBrowser": true,
-      "launchUrl": "http://localhost:5000/",
-      "environmentVariables": {
-        "ASPNETCORE_URLS": "http://localhost:5000",
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "distributionName": ""
     },
     "Server": {
       "commandName": "Project",
@@ -32,6 +21,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": "false",
+      "nativeDebugging": true,
       "applicationUrl": "http://localhost:5000"
     }
   }
