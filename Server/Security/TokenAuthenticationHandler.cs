@@ -9,7 +9,7 @@ using Server.Managers;
 
 namespace Server.Security {
 	/// <summary>
-	///     class to handle api_key security.
+	///     Class to handle token security from header
 	/// </summary>
 	public class TokenHeaderAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions> {
 		/// <summary>
@@ -23,7 +23,7 @@ namespace Server.Security {
 		/// <param name="logger"></param>
 		/// <param name="encoder"></param>
 		/// <param name="clock"></param>
-		/// <param name="manager"></param>
+		/// <param name="manager">Injected from Startup</param>
 		public TokenHeaderAuthenticationHandler(
 			IOptionsMonitor<AuthenticationSchemeOptions> options,
 			ILoggerFactory logger,
@@ -36,7 +36,7 @@ namespace Server.Security {
 		private ConfigManager ConfigManager { get; }
 
 		/// <summary>
-		///     verify that require api key header exist and handle authorization.
+		///     Verify that token header exist and handle authorization.
 		/// </summary>
 		protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
 			if (!Request.Headers.ContainsKey("Token"))
@@ -51,10 +51,11 @@ namespace Server.Security {
 	}
 
 	/// <summary>
+	///     Class to handle token security from query
 	/// </summary>
 	public class TokenQueryAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions> {
 		/// <summary>
-		///     scheme name for authentication handler.
+		///     Scheme name for authentication handler.
 		/// </summary>
 		public const string SchemeName = "TokenQuery";
 
@@ -64,7 +65,7 @@ namespace Server.Security {
 		/// <param name="logger"></param>
 		/// <param name="encoder"></param>
 		/// <param name="clock"></param>
-		/// <param name="manager"></param>
+		/// <param name="manager">Injected from Startup</param>
 		public TokenQueryAuthenticationHandler(
 			IOptionsMonitor<AuthenticationSchemeOptions> options,
 			ILoggerFactory logger,
@@ -74,12 +75,10 @@ namespace Server.Security {
 		) : base(options, logger, encoder, clock)
 			=> ConfigManager = manager;
 
-		/// <summary>
-		/// </summary>
 		private ConfigManager ConfigManager { get; }
 
 		/// <summary>
-		///     verify that require api key header exist and handle authorization.
+		///     Verify that token query exist and handle authorization.
 		/// </summary>
 		protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
 			if (!Request.Query.ContainsKey("token"))

@@ -125,7 +125,7 @@ namespace Server {
 			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
 			initiator.LogIn();
-			//initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
+			initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
 			services.AddSingleton(initiator);
 		}
 

@@ -10,42 +10,51 @@ using Server.Models;
 
 namespace Server.Managers {
 	/// <summary>
+	///     Manager of real time stock quotes
 	/// </summary>
 	public class StockManager {
 		/// <summary>
+		///     Default interval is 5 minutes
 		/// </summary>
-		public StockManager() : this(TimeSpan.FromSeconds(3)) { }
+		public StockManager() : this(TimeSpan.FromMinutes(5)) { }
 
 		/// <summary>
 		/// </summary>
-		/// <param name="interval"></param>
+		/// <param name="interval">Interval to sync with public quote server</param>
 		public StockManager(TimeSpan interval) => Timer = new Timer(interval.TotalMilliseconds);
 
 		/// <summary>
+		///     Whether the manager has been initialized with stock list
 		/// </summary>
 		public bool Initialized { get; private set; }
 
 		/// <summary>
+		///     Whether the manager has stopped due to trade off
 		/// </summary>
 		public bool Stopped { get; private set; }
 
 		/// <summary>
+		///     Timer for synchronization
 		/// </summary>
 		protected Timer Timer { get; init; }
 
 		/// <summary>
+		///     Realtime quotes
 		/// </summary>
 		protected Dictionary<string, (List<Quote> PlayBack, List<Quote> Recent)> Quotes { get; } = new();
 
 		/// <summary>
+		///     Record the last websocket push time of a user on single stock trend chart
 		/// </summary>
 		protected Dictionary<string, DateTime> LastSinglePushTime { get; } = new();
 
 		/// <summary>
+		///     Record the last websocket push time of a user on stock list
 		/// </summary>
 		protected Dictionary<string, DateTime> LastListPushTime { get; } = new();
 
 		/// <summary>
+		///     Send get request
 		/// </summary>
 		/// <param name="uri"></param>
 		/// <returns></returns>
@@ -59,12 +68,14 @@ namespace Server.Managers {
 		}
 
 		/// <summary>
+		///     Get realtime quote from sina server
 		/// </summary>
-		/// <param name="ids"></param>
+		/// <param name="ids">Stock list</param>
 		/// <returns></returns>
 		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
-			var uri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
-			//var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			//Local mocked server
+			var localUri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			var raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
@@ -95,8 +106,9 @@ namespace Server.Managers {
 		}
 
 		/// <summary>
+		///     Initialize the manager with stock list
 		/// </summary>
-		/// <param name="ids"></param>
+		/// <param name="ids">Stock list</param>
 		/// <returns></returns>
 		public async Task Initialize(string[] ids) {
 			foreach (var id in ids)

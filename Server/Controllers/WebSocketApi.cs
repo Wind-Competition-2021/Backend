@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Net;
@@ -20,6 +19,7 @@ using Timer = System.Timers.Timer;
 
 namespace Server.Controllers {
 	/// <summary>
+	///     Controller for websocket request
 	/// </summary>
 	[ApiController]
 	public sealed class WebSocketController : ControllerBase {
@@ -35,10 +35,10 @@ namespace Server.Controllers {
 			Initiator.Application.MessageReceived += (_, e) => {
 				MsgType type = new();
 				e.Message.Header.GetField(type);
-				if (type.Obj == TDFData.MsgType) {
-					var message = new TDFData(e.Message);
-					StockManager.Add(message.WindCode.Obj, new Quote(message));
-				}
+				if (type.Obj != TDFData.MsgType)
+					return;
+				var message = new TDFData(e.Message);
+				StockManager.Add(message.WindCode.Obj, new Quote(message));
 			};
 		}
 
@@ -85,7 +85,6 @@ namespace Server.Controllers {
 					var prices = StockManager.GetSingle(token, id);
 					if (prices == null || prices.Count == 0)
 						return null;
-					List<Task> tasks = new(prices.Count);
 					foreach (var price in prices)
 						price.Pinned = config.PinnedStocks.Contains(id);
 					return webSocket.SendAsync(prices.ToArray());
@@ -107,6 +106,7 @@ namespace Server.Controllers {
 		}
 
 		private async Task<IActionResult> UpdateQuotes(string token, Func<WebSocket, Configuration, Task> getTasks, Func<Configuration, int> getInterval) {
+			//Reject if not websocket
 			if (!HttpContext.WebSockets.IsWebSocketRequest) {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 				return BadRequest("Not a websocket request");
@@ -116,6 +116,7 @@ namespace Server.Controllers {
 				Interval = getInterval(ConfigManager[token]),
 				AutoReset = false
 			};
+			//Indicate whether the last push has finished
 			var lastElapsedFinished = true;
 			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
 				if (StockManager?.Stopped == true)
@@ -161,6 +162,7 @@ namespace Server.Controllers {
 	/// </summary>
 	public static class WebSocketExtension {
 		/// <summary>
+		///     Combine multiple unended message
 		/// </summary>
 		/// <param name="webSocket"></param>
 		/// <param name="cancellationToken"></param>
@@ -191,8 +193,9 @@ namespace Server.Controllers {
 		}
 
 		/// <summary>
+		///     Receive message and deserialize to T
 		/// </summary>
-		/// <typeparam name="T"></typeparam>
+		/// <typeparam name="T">Type to deserialize to</typeparam>
 		/// <param name="webSocket"></param>
 		/// <param name="cancellationToken"></param>
 		/// <param name="encoding"></param>
@@ -205,6 +208,7 @@ namespace Server.Controllers {
 		}
 
 		/// <summary>
+		///     Send typed object using Json serializer
 		/// </summary>
 		/// <typeparam name="T"></typeparam>
 		/// <param name="webSocket"></param>
@@ -221,6 +225,7 @@ namespace Server.Controllers {
 		}
 
 		/// <summary>
+		///     Recursively receive messages until websocket is closed
 		/// </summary>
 		/// <param name="webSocket"></param>
 		/// <param name="onReceived"></param>

@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Server {
 	/// <summary>
-	/// Program
+	///     Program
 	/// </summary>
-	public class Program {
+	public static class Program {
 		/// <summary>
-		/// Main
+		///     Main
 		/// </summary>
 		/// <param name="args"></param>
 		public static void Main(string[] args) {
@@ -15,12 +15,12 @@ namespace Server {
 		}
 
 		/// <summary>
-		/// Create the web host builder.
+		///     Create the web host builder.
 		/// </summary>
 		/// <param name="args"></param>
 		/// <returns>IWebHostBuilder</returns>
-		public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-			WebHost.CreateDefaultBuilder(args)
+		public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+			=> WebHost.CreateDefaultBuilder(args)
 				.UseStartup<Startup>();
 	}
 }
