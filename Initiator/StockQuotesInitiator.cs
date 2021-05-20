@@ -17,19 +17,6 @@ namespace Initiator {
 			DefaultMessageFactory messageFactory = new();
 			Sessions = Settings.GetSessions();
 			Application = new ApplicationWrapper();
-			Application.MessageReceived += (sender, e) => {
-				if (e.Message.Header.GetString(35) != TDFData.MsgType)
-					return;
-				TDFData message = new(e.Message);
-				Stock newStock = new(message!.WindCode.Obj);
-				if (Stocks.TryGetValue(newStock, out var stock))
-					stock.Quotes.Add(new Quote(message));
-				else {
-					stock!.Quotes.Add(new Quote(message));
-					Stocks.Add(newStock);
-					Console.WriteLine($"Id: {newStock.Id}");
-				}
-			};
 			SocketInitiator = new SocketInitiator(Application, storeFactory, Settings, logFactory, messageFactory);
 		}
 
@@ -37,8 +24,6 @@ namespace Initiator {
 
 		public HashSet<SessionID> Sessions { get; }
 		public SessionID DefaultSession { get; set; }
-
-		public HashSet<Stock> Stocks { get; } = new();
 
 		public EchoType Echo {
 			get => Application.Echo;
@@ -70,12 +55,15 @@ namespace Initiator {
 		public bool RequestMarketData(MarketDataRequestType type = null, DateTime? beginDate = null, DateTime? endDate = null, SessionID sessionId = null) {
 			type ??= MarketDataRequestType.RealTime;
 			var request = new MarketDataRequest {
+				MDReqID = new MDReqID("MarketDataRequestId"),
 				SubscriptionRequestType = type.Type
 			};
-			if (type == MarketDataRequestType.History) {
-				var begin = new TDBeginDate(beginDate ?? throw new ArgumentNullException(nameof(beginDate)));
-				var end = new TDEndDate(endDate ?? throw new ArgumentNullException(nameof(endDate)));
+			if (beginDate.HasValue) {
+				var begin = new TDBeginDate((DateTime)beginDate);
 				request.SetField(begin);
+			}
+			if (endDate.HasValue) {
+				var end = new TDEndDate((DateTime)endDate);
 				request.SetField(end);
 			}
 			return SendMessage(request, sessionId ?? DefaultSession);

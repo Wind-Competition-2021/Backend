@@ -10,6 +10,7 @@
 using System;
 using System.Runtime.Serialization;
 using System.Text;
+using Initiator;
 using Newtonsoft.Json;
 
 namespace Server.Models {
@@ -17,6 +18,28 @@ namespace Server.Models {
 	/// </summary>
 	[DataContract]
 	public class RealTimePrice : PriceBase, IEquatable<RealTimePrice> {
+		/// <summary>
+		///     Default constructor
+		/// </summary>
+		public RealTimePrice() { }
+
+		/// <summary>
+		/// </summary>
+		/// <param name="quote"></param>
+		/// <param name="id"></param>
+		public RealTimePrice(Quote quote, string id = null) {
+			if (!string.IsNullOrEmpty(id))
+				Id = id;
+			Opening = (int)(quote.OpeningPrice * 10000m);
+			Closing = (int)(quote.ClosingPrice * 10000m);
+			Highest = (int)(quote.HighestPrice * 10000m);
+			Lowest = (int)(quote.LowestPrice * 10000m);
+			Volume = quote.TotalVolume;
+			Turnover = (long)quote.TotalTurnover;
+			Time = quote.TradingTime;
+			PreClosing = (int)(quote.PreClosingPrice * 10000m);
+		}
+
 		/// <summary>
 		///     Gets or Sets Time
 		/// </summary>
@@ -78,7 +101,7 @@ namespace Server.Models {
 		/// <param name="obj">Object to be compared</param>
 		/// <returns>Boolean</returns>
 		public override bool Equals(object obj) {
-			if (ReferenceEquals(null, obj))
+			if (obj is null)
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;

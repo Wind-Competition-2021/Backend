@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -9,8 +11,9 @@ using System.Threading.Tasks;
 using Initiator;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using QuickFix.FIX44;
 using Server.Managers;
-using Server.Models;
+using Quote = Initiator.Quote;
 using Timer = System.Timers.Timer;
 
 namespace Server.Controllers {
@@ -20,20 +23,16 @@ namespace Server.Controllers {
 	public class WebSocketController : ControllerBase {
 		/// <summary>
 		/// </summary>
-		/// <param name="manager"></param>
+		/// <param name="configManager"></param>
 		/// <param name="initiator"></param>
-		public WebSocketController(ConfigManager manager, StockQuotesInitiator initiator) {
-			ConfigManager = manager;
+		public WebSocketController(ConfigManager configManager, StockQuotesInitiator initiator) {
+			ConfigManager = configManager;
 			Initiator = initiator;
+			Initiator.Application.MessageReceived += (sender, e) => {
+				var message = new TDFData(e.Message);
+				StockManger.Add(message.WindCode.Obj, new Quote(message));
+			};
 		}
-
-		/// <summary>
-		/// </summary>
-		private Dictionary<string, Dictionary<string, int>> ListOffset { get; } = new();
-
-		/// <summary>
-		/// </summary>
-		private Dictionary<string, int> SingleOffset { get; } = new();
 
 		/// <summary>
 		/// </summary>
@@ -41,7 +40,57 @@ namespace Server.Controllers {
 
 		/// <summary>
 		/// </summary>
+		public StockManager StockManger { get; private set; }
+
+		/// <summary>
+		/// </summary>
 		public StockQuotesInitiator Initiator { get; }
+
+		/// <summary>
+		/// </summary>
+		/// <param name="uri"></param>
+		/// <returns></returns>
+		public static async Task<string> GetAsync(string uri) {
+			var request = (HttpWebRequest)WebRequest.Create(uri);
+			request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+			using var response = (HttpWebResponse)await request.GetResponseAsync();
+			await using var stream = response.GetResponseStream();
+			using var reader = new StreamReader(stream);
+			return await reader.ReadToEndAsync();
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="ids"></param>
+		/// <returns></returns>
+		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
+			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			var raw = await GetAsync(uri);
+			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
+			var result = new List<Quote>(rows.Count);
+			foreach (var row in rows) {
+				var parts = row.Split('=').ToArray();
+				var id = parts[0][^8..];
+				var content = parts[1][1..^3];
+				parts = content.Split(',').ToArray();
+				var price = new Quote {
+					OpeningPrice = Convert.ToDecimal(parts[1]),
+					PreClosingPrice = Convert.ToDecimal(parts[2]),
+					ClosingPrice = Convert.ToDecimal(parts[3]),
+					HighestPrice = Convert.ToDecimal(parts[4]),
+					LowestPrice = Convert.ToDecimal(parts[5]),
+					TotalVolume = Convert.ToInt64(parts[8]),
+					TotalTurnover = Convert.ToDecimal(parts[9]),
+					AskPrices = new[] {Convert.ToDecimal(parts[11]), Convert.ToDecimal(parts[13]), Convert.ToDecimal(parts[15]), Convert.ToDecimal(parts[17]), Convert.ToDecimal(parts[19])},
+					AskVolumes = new[] {Convert.ToInt64(parts[10]), Convert.ToInt64(parts[12]), Convert.ToInt64(parts[14]), Convert.ToInt64(parts[16]), Convert.ToInt64(parts[18])},
+					BidPrices = new[] {Convert.ToDecimal(parts[21]), Convert.ToDecimal(parts[23]), Convert.ToDecimal(parts[25]), Convert.ToDecimal(parts[27]), Convert.ToDecimal(parts[29])},
+					BidVolumes = new[] {Convert.ToInt64(parts[20]), Convert.ToInt64(parts[22]), Convert.ToInt64(parts[24]), Convert.ToInt64(parts[26]), Convert.ToInt64(parts[28])},
+					TradingTime = DateTime.Parse($"{parts[30]}T{parts[31]}")
+				};
+				result.Add(price);
+			}
+			return result;
+		}
 
 		/// <summary>
 		/// </summary>
@@ -54,9 +103,6 @@ namespace Server.Controllers {
 				return BadRequest("Not a websocket request");
 			}
 			var config = ConfigManager[token];
-			var listOffset = ListOffset[token] = new Dictionary<string, int>(Initiator.Stocks.Count);
-			foreach (var stock in Initiator.Stocks)
-				listOffset[stock.Id] = 0;
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 			var messageSender = new Timer {
 				Interval = config.RefreshInterval.Single!.Value,
@@ -64,47 +110,31 @@ namespace Server.Controllers {
 			};
 			var lastElapsedFinished = false;
 			messageSender.Elapsed += (sender, args) => {
-				if (!lastElapsedFinished)
+				if (!lastElapsedFinished || StockManger == null)
 					goto ResetTimer;
-				List<Task> tasks = new();
-				foreach (var stock in Initiator.Stocks) {
-					if (!listOffset.ContainsKey(stock.Id))
-						listOffset[stock.Id] = 0;
-					var offset = listOffset[stock.Id];
-					var count = stock.Quotes.Count;
-					if (offset >= count)
-						continue;
-					for (var i = offset; i < count; ++i) {
-						var quote = stock.Quotes[i];
-						tasks.Add(
-							webSocket.SendAsync(
-								new RealTimePrice {
-									Id = stock.Id,
-									Opening = (int)quote.OpeningPrice,
-									Closing = (int)quote.ClosingPrice,
-									Highest = (int)quote.HighestPrice,
-									Lowest = (int)quote.LowestPrice,
-									Volume = quote.TotalVolume,
-									Turnover = (long)quote.TotalTurnover,
-									Time = quote.TradingTime,
-									PreClosing = (int)quote.PreClosingPrice,
-									Pinned = config.PinnedStocks.Contains(stock.Id)
-								}
-							)
-						);
-						listOffset[stock.Id] = count;
-					}
+				var prices = StockManger.GetList(token);
+				if (prices.Count == 0)
+					goto ResetTimer;
+				List<Task> tasks = new(prices.Count);
+				foreach (var price in prices) {
+					price.Pinned = config.PinnedStocks.Contains(price.Id);
+					tasks.Add(webSocket.SendAsync(price));
 				}
-				if (tasks.Count == 0)
-					goto ResetTimer;
-				Task.WhenAll(tasks)
-					.ContinueWith(_ => lastElapsedFinished = true);
+				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
 				messageSender.Interval = config.RefreshInterval.Single!.Value;
 				messageSender.Start();
 			};
 			messageSender.Start();
-			var result = await webSocket.Listen();
+			var result = await webSocket.Listen(
+				(text, type) => {
+					try {
+						var ids = JsonConvert.DeserializeObject<string[]>(text);
+						StockManger = new StockManager(ids);
+					}
+					catch (Exception) { }
+				}
+			);
 			messageSender.Close();
 			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
 			return new EmptyResult();
@@ -120,9 +150,7 @@ namespace Server.Controllers {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 				return BadRequest("Not a websocket request");
 			}
-			Initiator.Stocks.TryGetValue(new Stock(id), out var stock);
 			var config = ConfigManager[token];
-			SingleOffset[token] = 0;
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 			var messageSender = new Timer {
 				Interval = config.RefreshInterval.Single!.Value,
@@ -130,35 +158,31 @@ namespace Server.Controllers {
 			};
 			var lastElapsedFinished = false;
 			messageSender.Elapsed += (sender, args) => {
-				var offset = SingleOffset[token];
-				if (lastElapsedFinished && (stock != null || Initiator.Stocks.TryGetValue(new Stock(id), out stock)) && stock.Quotes.Count is var count && count > offset) {
-					List<Task> tasks = new(count - offset);
-					for (var i = offset; i < count; ++i) {
-						var quote = stock.Quotes[i];
-						tasks[i - offset] = webSocket.SendAsync(
-							new RealTimePrice {
-								Id = id,
-								Opening = (int)quote.OpeningPrice,
-								Closing = (int)quote.ClosingPrice,
-								Highest = (int)quote.HighestPrice,
-								Lowest = (int)quote.LowestPrice,
-								Volume = quote.TotalVolume,
-								Turnover = (long)quote.TotalTurnover,
-								Time = quote.TradingTime,
-								PreClosing = (int)quote.PreClosingPrice,
-								Pinned = config.PinnedStocks.Contains(id)
-							}
-						);
-					}
-					SingleOffset[token] = count;
-					Task.WhenAll(tasks)
-						.ContinueWith(_ => lastElapsedFinished = true);
+				if (!lastElapsedFinished || StockManger == null)
+					goto ResetTimer;
+				var prices = StockManger.GetSingle(token, id);
+				if (prices.Count == 0)
+					goto ResetTimer;
+				List<Task> tasks = new(prices.Count);
+				foreach (var price in prices) {
+					price.Pinned = config.PinnedStocks.Contains(id);
+					tasks.Add(webSocket.SendAsync(price));
 				}
+				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
+			ResetTimer:
 				messageSender.Interval = config.RefreshInterval.Single!.Value;
 				messageSender.Start();
 			};
 			messageSender.Start();
-			var result = await webSocket.Listen();
+			var result = await webSocket.Listen(
+				(text, type) => {
+					try {
+						var ids = JsonConvert.DeserializeObject<string[]>(text);
+						StockManger = new StockManager(ids);
+					}
+					catch (Exception) { }
+				}
+			);
 			messageSender.Close();
 			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
 			return new EmptyResult();
@@ -180,7 +204,7 @@ namespace Server.Controllers {
 			var free = buffer.Length;
 			WebSocketReceiveResult finalResult;
 			while (true) {
-				var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), CancellationToken.None);
+				var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), cancellationToken);
 				offset += result.Count;
 				free -= result.Count;
 				if (result.EndOfMessage) {
