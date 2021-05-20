@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Initiator;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using QuickFix.Fields;
 using QuickFix.FIX44;
 using Server.Managers;
 using Quote = Initiator.Quote;
@@ -28,8 +29,12 @@ namespace Server.Controllers {
 			ConfigManager = configManager;
 			Initiator = initiator;
 			Initiator.Application.MessageReceived += (_, e) => {
-				var message = new TDFData(e.Message);
-				StockManger.Add(message.WindCode.Obj, new Quote(message));
+				MsgType type = new();
+				e.Message.Header.GetField(type);
+				if (type.Obj == TDFData.MsgType) {
+					var message = new TDFData(e.Message);
+					StockManager.Add(message.WindCode.Obj, new Quote(message));
+				}
 			};
 		}
 
@@ -39,7 +44,7 @@ namespace Server.Controllers {
 
 		/// <summary>
 		/// </summary>
-		public StockManager StockManger { get; private set; }
+		public StockManager StockManager { get; private set; }
 
 		/// <summary>
 		/// </summary>
@@ -74,37 +79,43 @@ namespace Server.Controllers {
 				Interval = config.RefreshInterval.Single!.Value,
 				AutoReset = false
 			};
-			var lastElapsedFinished = false;
+			var lastElapsedFinished = true;
 			messageSender.Elapsed += (_, _) => {
-				if (!lastElapsedFinished || StockManger == null)
+				if (!lastElapsedFinished || StockManager == null)
 					goto ResetTimer;
-				var prices = StockManger.GetList(token);
-				if (prices.Count == 0)
+				var prices = StockManager.GetList(token);
+				if (prices == null || prices.Count == 0)
 					goto ResetTimer;
-				List<Task> tasks = new(prices.Count);
-				foreach (var price in prices) {
+				foreach (var price in prices)
 					price.Pinned = config.PinnedStocks.Contains(price.Id);
-					tasks.Add(webSocket.SendAsync(price));
-				}
-				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
+				lastElapsedFinished = false;
+				webSocket.SendAsync(prices.ToArray()).ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
 				messageSender.Interval = config.RefreshInterval.Single!.Value;
 				messageSender.Start();
 			};
 			messageSender.Start();
-			var result = await webSocket.Listen(
+			var receive = webSocket.Listen(
 				(text, type) => {
 					if (type != WebSocketMessageType.Text)
 						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
-						StockManger = new StockManager(ids);
+						StockManager = new StockManager(ids);
 					}
 					catch (Exception) {
 						// ignored
 					}
 				}
 			);
+			var send = Task.Run(
+				async () => {
+					while (StockManager?.Stopped != true)
+						await Task.Delay(TimeSpan.FromMinutes(1));
+					return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, "Trade Off");
+				}
+			);
+			var result = (await Task.WhenAny(new[] {receive, send})).Result;
 			messageSender.Close();
 			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
 			return new EmptyResult();
@@ -126,37 +137,48 @@ namespace Server.Controllers {
 				Interval = config.RefreshInterval.Single!.Value,
 				AutoReset = false
 			};
-			var lastElapsedFinished = false;
+			var lastElapsedFinished = true;
 			messageSender.Elapsed += (_, _) => {
-				if (!lastElapsedFinished || StockManger == null)
+				if (StockManager?.Stopped == true)
+					return;
+				if (!lastElapsedFinished || StockManager == null)
 					goto ResetTimer;
-				var prices = StockManger.GetSingle(token, id);
-				if (prices.Count == 0)
+				var prices = StockManager.GetSingle(token, id);
+				if (prices == null || prices.Count == 0)
 					goto ResetTimer;
 				List<Task> tasks = new(prices.Count);
 				foreach (var price in prices) {
 					price.Pinned = config.PinnedStocks.Contains(id);
 					tasks.Add(webSocket.SendAsync(price));
 				}
+				lastElapsedFinished = true;
 				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
 				messageSender.Interval = config.RefreshInterval.Single!.Value;
 				messageSender.Start();
 			};
 			messageSender.Start();
-			var result = await webSocket.Listen(
+			var receive = webSocket.Listen(
 				(text, type) => {
 					if (type != WebSocketMessageType.Text)
 						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
-						StockManger = new StockManager(ids);
+						StockManager = new StockManager(ids);
 					}
 					catch (Exception) {
 						// ignored
 					}
 				}
 			);
+			var send = Task.Run(
+				async () => {
+					while (StockManager?.Stopped != true)
+						await Task.Delay(TimeSpan.FromMinutes(1));
+					return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, "Trade Off");
+				}
+			);
+			var result = (await Task.WhenAny(new[] {receive, send})).Result;
 			messageSender.Close();
 			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
 			return new EmptyResult();
