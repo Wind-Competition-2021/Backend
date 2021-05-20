@@ -1,4 +1,3 @@
-using System;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -29,11 +28,11 @@ namespace Server.Security {
 			ILoggerFactory logger,
 			UrlEncoder encoder,
 			ISystemClock clock,
-			ConfigManager manager
+			ConfigurationManager manager
 		) : base(options, logger, encoder, clock)
 			=> ConfigManager = manager;
 
-		private ConfigManager ConfigManager { get; }
+		private ConfigurationManager ConfigManager { get; }
 
 		/// <summary>
 		///     Verify that token header exist and handle authorization.
@@ -43,7 +42,7 @@ namespace Server.Security {
 				return Task.FromResult(AuthenticateResult.Fail("Missing Authorization Header"));
 			if (!ConfigManager.Contains(Request.Headers["token"]))
 				return Task.FromResult(AuthenticateResult.Fail("Token Not Found"));
-			var identity = new ClaimsIdentity();
+			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Headers["token"])}, "ApiKey");
 			var principal = new ClaimsPrincipal(identity);
 			var ticket = new AuthenticationTicket(principal, Scheme.Name);
 			return Task.FromResult(AuthenticateResult.Success(ticket));
@@ -71,11 +70,11 @@ namespace Server.Security {
 			ILoggerFactory logger,
 			UrlEncoder encoder,
 			ISystemClock clock,
-			ConfigManager manager
+			ConfigurationManager manager
 		) : base(options, logger, encoder, clock)
 			=> ConfigManager = manager;
 
-		private ConfigManager ConfigManager { get; }
+		private ConfigurationManager ConfigManager { get; }
 
 		/// <summary>
 		///     Verify that token query exist and handle authorization.
@@ -85,7 +84,7 @@ namespace Server.Security {
 				return Task.FromResult(AuthenticateResult.Fail("Missing Authorization Query"));
 			if (!ConfigManager.Contains(Request.Headers["token"]))
 				return Task.FromResult(AuthenticateResult.Fail("Token Not Found"));
-			var identity = new ClaimsIdentity(Array.Empty<Claim>());
+			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Headers["token"])}, "ApiKey");
 			var principal = new ClaimsPrincipal(identity);
 			var ticket = new AuthenticationTicket(principal, Scheme.Name);
 			return Task.FromResult(AuthenticateResult.Success(ticket));
