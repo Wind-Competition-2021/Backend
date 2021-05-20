@@ -108,7 +108,7 @@ namespace Server {
 				RedirectStandardError = true
 			};
 			var process = Process.Start(processInfo);
-			process!.Exited += (sender, e) => {
+			process!.Exited += (_, _) => {
 				Console.Error.WriteLine("Fetcher exited", Color.Red);
 				if (!process.StandardError.EndOfStream)
 					Console.Error.WriteLine(process.StandardError.ReadToEnd(), Color.Red);
@@ -118,10 +118,10 @@ namespace Server {
 
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator(@"..\Initiator\Config\Initiator.cfg");
-			initiator.EchoBlacklist.Clear();
 			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
 			initiator.LogIn();
+			//initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
 			services.AddSingleton(initiator);
 		}
 

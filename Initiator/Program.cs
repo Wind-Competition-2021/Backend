@@ -16,8 +16,8 @@ namespace Initiator {
 			initiator.UntilLoggedIn()
 				.ContinueWith(
 					_ => {
-						initiator.RequestMarketData(MarketDataRequestType.PlayBack);
-						Task.Delay(TimeSpan.FromSeconds(10))
+						initiator.RequestMarketData(MarketDataRequestType.PlayBack, new DateTime(2021, 5, 18), new DateTime(2021, 5, 19));
+						Task.Delay(TimeSpan.FromSeconds(5))
 							.ContinueWith(
 								_ => {
 									initiator.LogOut();
