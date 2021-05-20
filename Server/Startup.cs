@@ -92,8 +92,8 @@ namespace Server {
 					}
 				);
 
-			//Inject ConfigManager
-			services.AddSingleton(new ConfigManager());
+			//Inject ConfigurationManager
+			services.AddSingleton(new ConfigurationManager());
 
 			//Inject Fetcher
 			var fetcherRoot = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -116,16 +116,16 @@ namespace Server {
 			};
 			services.AddSingleton(process);
 
-			//Inject StockManager
-			var stockManager = new StockManager();
-			services.AddSingleton(stockManager);
+			//Inject RealtimeQuotesManager
+			var realtimeQuotesManager = new RealtimeQuotesManager();
+			services.AddSingleton(realtimeQuotesManager);
 
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator(@"..\Initiator\Config\Initiator.cfg");
 			initiator.DefaultSession = initiator.Sessions.First();
 			initiator.Start();
 			initiator.LogIn();
-			initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
+			//initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
 			services.AddSingleton(initiator);
 		}
 
@@ -145,8 +145,8 @@ namespace Server {
 			app.UseRouting();
 			app.Use(
 				async (context, next) => {
-					Console.Write(context.Request.Method, Color.Gold);
-					Console.WriteLine($" {context.Request.GetDisplayUrl()}", Color.Cyan);
+					Console.Write(context.Request.Method, Color.Cyan);
+					Console.WriteLine($" {context.Request.GetDisplayUrl()}", Color.MediumSpringGreen);
 					Console.ResetColor();
 					await next();
 				}

@@ -2,8 +2,33 @@ using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Server.Models {
+	/// <summary>
+	///     Rehabilitation adjustment type
+	/// </summary>
+	[JsonConverter(typeof(StringEnumConverter))]
+	public enum RehabilitationType {
+		/// <summary>
+		///     Forward rehabilitation
+		/// </summary>
+		[EnumMember(Value = "pre")]
+		PreEnum = 0,
+
+		/// <summary>
+		///     Backward rehabilitation
+		/// </summary>
+		[EnumMember(Value = "post")]
+		PostEnum = 1,
+
+		/// <summary>
+		///     No rehabilitation
+		/// </summary>
+		[EnumMember(Value = "none")]
+		NoneEnum = 2
+	}
+
 	/// <summary>
 	/// </summary>
 	[DataContract]

@@ -21,11 +21,11 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="manager"></param>
-		public TokenApiController(ConfigManager manager) => ConfigManager = manager;
+		public TokenApiController(ConfigurationManager manager) => ConfigurationManager = manager;
 
 		/// <summary>
 		/// </summary>
-		public ConfigManager ConfigManager { get; }
+		public ConfigurationManager ConfigurationManager { get; }
 
 		/// <summary>
 		/// </summary>
@@ -37,8 +37,8 @@ namespace Server.Controllers {
 		[SwaggerOperation("GetToken")]
 		[SwaggerResponse(201, type: typeof(string), description: "The new token has been created and returned")]
 		public virtual IActionResult GetToken() {
-			var newToken = ConfigManager.GetNewToken();
-			ConfigManager.Add(newToken);
+			var newToken = ConfigurationManager.GetNewToken();
+			ConfigurationManager.Add(newToken);
 			return StatusCode(201, newToken);
 		}
 
@@ -52,6 +52,6 @@ namespace Server.Controllers {
 		[ValidateModelState]
 		[SwaggerOperation("ValidateToken")]
 		[SwaggerResponse(200, type: typeof(bool?), description: "Validation completed")]
-		public virtual IActionResult ValidateToken([FromQuery] [Required] string token) => Ok(ConfigManager.Contains(token));
+		public virtual IActionResult ValidateToken([FromQuery] [Required] string token) => Ok(ConfigurationManager.Contains(token));
 	}
 }

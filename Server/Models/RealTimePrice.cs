@@ -36,7 +36,7 @@ namespace Server.Models {
 		///     Gets or Sets Time
 		/// </summary>
 		[DataMember(Name = "time")]
-		public DateTime? Time { get; }
+		public DateTime? Time { get; set; }
 
 		/// <summary>
 		///     Gets or Sets PreClosing

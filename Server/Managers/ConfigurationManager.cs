@@ -7,7 +7,7 @@ namespace Server.Managers {
 	/// <summary>
 	///     Manager of user configurations
 	/// </summary>
-	public class ConfigManager {
+	public class ConfigurationManager {
 		private const string CharSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 		private static readonly Random Random = new();
 

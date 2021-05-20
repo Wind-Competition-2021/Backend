@@ -12,16 +12,16 @@ namespace Server.Managers {
 	/// <summary>
 	///     Manager of real time stock quotes
 	/// </summary>
-	public class StockManager {
+	public class RealtimeQuotesManager {
 		/// <summary>
 		///     Default interval is 5 minutes
 		/// </summary>
-		public StockManager() : this(TimeSpan.FromMinutes(5)) { }
+		public RealtimeQuotesManager() : this(TimeSpan.FromSeconds(5)) { }
 
 		/// <summary>
 		/// </summary>
 		/// <param name="interval">Interval to sync with public quote server</param>
-		public StockManager(TimeSpan interval) => Timer = new Timer(interval.TotalMilliseconds);
+		public RealtimeQuotesManager(TimeSpan interval) => Timer = new Timer(interval.TotalMilliseconds);
 
 		/// <summary>
 		///     Whether the manager has been initialized with stock list
@@ -74,8 +74,8 @@ namespace Server.Managers {
 		/// <returns></returns>
 		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
 			//Local mocked server
-			var localUri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
-			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			var uri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			//var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			var raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
@@ -115,7 +115,7 @@ namespace Server.Managers {
 				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
 			var lastElapsedFinished = true;
 			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(23)) {
+				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(23.9)) {
 					Timer.Stop();
 					Stopped = true;
 				}

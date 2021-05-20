@@ -2,7 +2,6 @@ using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Server.Models {
 	/// <summary>
@@ -11,46 +10,22 @@ namespace Server.Models {
 	[DataContract]
 	public class WeeklyPrice : PriceBase, IEquatable<WeeklyPrice> {
 		/// <summary>
-		///     Gets or Sets Rehabilitation
-		/// </summary>
-		[JsonConverter(typeof(StringEnumConverter))]
-		public enum RehabilitationEnum {
-			/// <summary>
-			///     Enum PreEnum for pre
-			/// </summary>
-			[EnumMember(Value = "pre")]
-			PreEnum = 0,
-
-			/// <summary>
-			///     Enum PostEnum for post
-			/// </summary>
-			[EnumMember(Value = "post")]
-			PostEnum = 1,
-
-			/// <summary>
-			///     Enum NoneEnum for none
-			/// </summary>
-			[EnumMember(Value = "none")]
-			NoneEnum = 2
-		}
-
-		/// <summary>
 		///     Gets or Sets Date
 		/// </summary>
 		[DataMember(Name = "date")]
-		public DateTime? Date { get; }
+		public DateTime? Date { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Rehabilitation
 		/// </summary>
 		[DataMember(Name = "rehabilitation")]
-		public RehabilitationEnum? Rehabilitation { get; }
+		public RehabilitationType? Rehabilitation { get; set; }
 
 		/// <summary>
 		///     Gets or Sets TurnoverRate
 		/// </summary>
 		[DataMember(Name = "turnoverRate")]
-		public int? TurnoverRate { get; }
+		public int? TurnoverRate { get; set; }
 
 		/// <summary>
 		///     Returns true if WeeklyPrice instances are equal

@@ -2,7 +2,6 @@ using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Server.Models {
 	/// <summary>
@@ -10,34 +9,10 @@ namespace Server.Models {
 	[DataContract]
 	public class DailyPrice : PriceBase, IEquatable<DailyPrice> {
 		/// <summary>
-		///     Gets or Sets Rehabilitation
-		/// </summary>
-		[JsonConverter(typeof(StringEnumConverter))]
-		public enum RehabilitationEnum {
-			/// <summary>
-			///     Forward rehabilitation
-			/// </summary>
-			[EnumMember(Value = "pre")]
-			PreEnum = 0,
-
-			/// <summary>
-			///     Backward rehabilitation
-			/// </summary>
-			[EnumMember(Value = "post")]
-			PostEnum = 1,
-
-			/// <summary>
-			///     No rehabilitation
-			/// </summary>
-			[EnumMember(Value = "none")]
-			NoneEnum = 2
-		}
-
-		/// <summary>
 		///     Gets or Sets Date
 		/// </summary>
 		[DataMember(Name = "date")]
-		public DateTime? Date { get; }
+		public DateTime? Date { get; set; }
 
 		/// <summary>
 		///     Gets or Sets PreClosing
@@ -49,53 +24,53 @@ namespace Server.Models {
 		///     Gets or Sets Rehabilitation
 		/// </summary>
 		[DataMember(Name = "rehabilitation")]
-		public RehabilitationEnum? Rehabilitation { get; }
+		public RehabilitationType? Rehabilitation { get; set; }
 
 		/// <summary>
 		///     Gets or Sets TurnoverRate
 		/// </summary>
 		[DataMember(Name = "turnoverRate")]
-		public string TurnoverRate { get; }
+		public string TurnoverRate { get; set; }
 
 		/// <summary>
 		///     price/earnings ratio
 		/// </summary>
 		/// <value>price/earnings ratio</value>
 		[DataMember(Name = "per")]
-		public string Per { get; }
+		public string Per { get; set; }
 
 		/// <summary>
 		///     price to sales ratio
 		/// </summary>
 		/// <value>price to sales ratio</value>
 		[DataMember(Name = "psr")]
-		public string Psr { get; }
+		public string Psr { get; set; }
 
 		/// <summary>
 		///     price cash flow ratio
 		/// </summary>
 		/// <value>price cash flow ratio</value>
 		[DataMember(Name = "pcfr")]
-		public string Pcfr { get; }
+		public string Pcfr { get; set; }
 
 		/// <summary>
 		///     price to book ratio
 		/// </summary>
 		/// <value>price to book ratio</value>
 		[DataMember(Name = "pbr")]
-		public string Pbr { get; }
+		public string Pbr { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Stopped
 		/// </summary>
 		[DataMember(Name = "stopped")]
-		public bool? Stopped { get; }
+		public bool? Stopped { get; set; }
 
 		/// <summary>
 		///     Gets or Sets SpecialTreatment
 		/// </summary>
 		[DataMember(Name = "specialTreatment")]
-		public bool? SpecialTreatment { get; }
+		public bool? SpecialTreatment { get; set; }
 
 		/// <summary>
 		///     Returns true if DailyPrice instances are equal

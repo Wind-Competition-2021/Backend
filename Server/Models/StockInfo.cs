@@ -40,32 +40,32 @@ namespace Server.Models {
 		/// </summary>
 		[Required]
 		[DataMember(Name = "type")]
-		public TypeEnum? Type { get; }
+		public TypeEnum? Type { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Industry
 		/// </summary>
 		[DataMember(Name = "industry")]
-		public string Industry { get; }
+		public string Industry { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Classification
 		/// </summary>
 		[DataMember(Name = "classification")]
-		public string Classification { get; }
+		public string Classification { get; set; }
 
 		/// <summary>
 		///     Gets or Sets ListedDate
 		/// </summary>
 		[Required]
 		[DataMember(Name = "listedDate")]
-		public DateTime? ListedDate { get; }
+		public DateTime? ListedDate { get; set; }
 
 		/// <summary>
 		///     Gets or Sets DelistedDate
 		/// </summary>
 		[DataMember(Name = "delistedDate")]
-		public DateTime? DelistedDate { get; }
+		public DateTime? DelistedDate { get; set; }
 
 		/// <summary>
 		///     Returns true if StockInfo instances are equal

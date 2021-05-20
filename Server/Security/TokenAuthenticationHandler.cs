@@ -30,9 +30,9 @@ namespace Server.Security {
 			ISystemClock clock,
 			ConfigurationManager manager
 		) : base(options, logger, encoder, clock)
-			=> ConfigManager = manager;
+			=> ConfigurationManager = manager;
 
-		private ConfigurationManager ConfigManager { get; }
+		private ConfigurationManager ConfigurationManager { get; }
 
 		/// <summary>
 		///     Verify that token header exist and handle authorization.
@@ -40,7 +40,7 @@ namespace Server.Security {
 		protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
 			if (!Request.Headers.ContainsKey("Token"))
 				return Task.FromResult(AuthenticateResult.Fail("Missing Authorization Header"));
-			if (!ConfigManager.Contains(Request.Headers["token"]))
+			if (!ConfigurationManager.Contains(Request.Headers["token"]))
 				return Task.FromResult(AuthenticateResult.Fail("Token Not Found"));
 			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Headers["token"])}, "ApiKey");
 			var principal = new ClaimsPrincipal(identity);
@@ -72,9 +72,9 @@ namespace Server.Security {
 			ISystemClock clock,
 			ConfigurationManager manager
 		) : base(options, logger, encoder, clock)
-			=> ConfigManager = manager;
+			=> configurationManager = manager;
 
-		private ConfigurationManager ConfigManager { get; }
+		private ConfigurationManager configurationManager { get; }
 
 		/// <summary>
 		///     Verify that token query exist and handle authorization.
@@ -82,7 +82,7 @@ namespace Server.Security {
 		protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
 			if (!Request.Query.ContainsKey("token"))
 				return Task.FromResult(AuthenticateResult.Fail("Missing Authorization Query"));
-			if (!ConfigManager.Contains(Request.Headers["token"]))
+			if (!configurationManager.Contains(Request.Headers["token"]))
 				return Task.FromResult(AuthenticateResult.Fail("Token Not Found"));
 			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Headers["token"])}, "ApiKey");
 			var principal = new ClaimsPrincipal(identity);

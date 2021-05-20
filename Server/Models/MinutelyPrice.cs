@@ -2,7 +2,6 @@ using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Server.Models {
 	/// <summary>
@@ -10,40 +9,16 @@ namespace Server.Models {
 	[DataContract]
 	public class MinutelyPrice : PriceBase, IEquatable<MinutelyPrice> {
 		/// <summary>
-		///     Gets or Sets Rehabilitation
-		/// </summary>
-		[JsonConverter(typeof(StringEnumConverter))]
-		public enum RehabilitationEnum {
-			/// <summary>
-			///     Enum PreEnum for pre
-			/// </summary>
-			[EnumMember(Value = "pre")]
-			PreEnum = 0,
-
-			/// <summary>
-			///     Enum PostEnum for post
-			/// </summary>
-			[EnumMember(Value = "post")]
-			PostEnum = 1,
-
-			/// <summary>
-			///     Enum NoneEnum for none
-			/// </summary>
-			[EnumMember(Value = "none")]
-			NoneEnum = 2
-		}
-
-		/// <summary>
 		///     Gets or Sets Time
 		/// </summary>
 		[DataMember(Name = "time")]
-		public DateTime? Time { get; }
+		public DateTime? Time { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Rehabilitation
 		/// </summary>
 		[DataMember(Name = "rehabilitation")]
-		public RehabilitationEnum? Rehabilitation { get; }
+		public RehabilitationType? Rehabilitation { get; set; }
 
 		/// <summary>
 		///     Returns true if MinutelyPrice instances are equal

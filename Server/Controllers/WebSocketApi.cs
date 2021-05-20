@@ -25,12 +25,12 @@ namespace Server.Controllers {
 	public sealed class WebSocketController : ControllerBase {
 		/// <summary>
 		/// </summary>
-		/// <param name="configManager"></param>
-		/// <param name="stockManager"></param>
+		/// <param name="configurationManager"></param>
+		/// <param name="realtimeQuotesManager"></param>
 		/// <param name="initiator"></param>
-		public WebSocketController(ConfigManager configManager, StockManager stockManager, StockQuotesInitiator initiator) {
-			ConfigManager = configManager;
-			StockManager = stockManager;
+		public WebSocketController(ConfigurationManager configurationManager, RealtimeQuotesManager realtimeQuotesManager, StockQuotesInitiator initiator) {
+			ConfigurationManager = configurationManager;
+			RealtimeQuotesManager = realtimeQuotesManager;
 			Initiator = initiator;
 			Initiator.Application.MessageReceived += (_, e) => {
 				MsgType type = new();
@@ -38,17 +38,17 @@ namespace Server.Controllers {
 				if (type.Obj != TDFData.MsgType)
 					return;
 				var message = new TDFData(e.Message);
-				StockManager.Add(message.WindCode.Obj, new Quote(message));
+				RealtimeQuotesManager.Add(message.WindCode.Obj, new Quote(message));
 			};
 		}
 
 		/// <summary>
 		/// </summary>
-		public ConfigManager ConfigManager { get; }
+		public ConfigurationManager ConfigurationManager { get; }
 
 		/// <summary>
 		/// </summary>
-		public StockManager StockManager { get; }
+		public RealtimeQuotesManager RealtimeQuotesManager { get; }
 
 		/// <summary>
 		/// </summary>
@@ -63,7 +63,7 @@ namespace Server.Controllers {
 			=> UpdateQuotes(
 				token,
 				(webSocket, config) => {
-					var prices = StockManager.GetList(token);
+					var prices = RealtimeQuotesManager.GetList(token);
 					if (prices == null || prices.Count == 0)
 						return null;
 					foreach (var price in prices)
@@ -82,7 +82,7 @@ namespace Server.Controllers {
 			=> UpdateQuotes(
 				token,
 				(webSocket, config) => {
-					var prices = StockManager.GetSingle(token, id);
+					var prices = RealtimeQuotesManager.GetSingle(token, id);
 					if (prices == null || prices.Count == 0)
 						return null;
 					foreach (var price in prices)
@@ -113,20 +113,20 @@ namespace Server.Controllers {
 			}
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 			var messageSender = new Timer {
-				Interval = getInterval(ConfigManager[token]),
+				Interval = getInterval(ConfigurationManager[token]),
 				AutoReset = false
 			};
 			//Indicate whether the last push has finished
 			var lastElapsedFinished = true;
 			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
-				if (StockManager?.Stopped == true)
+				if (RealtimeQuotesManager?.Stopped == true)
 					return;
-				if (!lastElapsedFinished || StockManager?.Initialized != true)
+				if (!lastElapsedFinished || RealtimeQuotesManager?.Initialized != true)
 					goto ResetTimer;
-				var task = getTasks(webSocket, ConfigManager[token]);
+				var task = getTasks(webSocket, ConfigurationManager[token]);
 				task?.ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
-				messageSender.Interval = getInterval(ConfigManager[token]);
+				messageSender.Interval = getInterval(ConfigurationManager[token]);
 				messageSender.Start();
 			}
 			messageSender.Elapsed += Elapsed;
@@ -137,7 +137,7 @@ namespace Server.Controllers {
 						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
-						await StockManager.Initialize(ids);
+						await RealtimeQuotesManager.Initialize(ids);
 					}
 					catch (Exception) {
 						// ignored
@@ -146,7 +146,7 @@ namespace Server.Controllers {
 			);
 			var send = Task.Run(
 				async () => {
-					while (StockManager?.Stopped != true)
+					while (RealtimeQuotesManager?.Stopped != true)
 						await Task.Delay(TimeSpan.FromMinutes(1));
 					return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, "Trade Off");
 				}
