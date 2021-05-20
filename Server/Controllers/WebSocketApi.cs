@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -20,7 +19,7 @@ namespace Server.Controllers {
 	/// <summary>
 	/// </summary>
 	[ApiController]
-	public class WebSocketController : ControllerBase {
+	public sealed class WebSocketController : ControllerBase {
 		/// <summary>
 		/// </summary>
 		/// <param name="configManager"></param>
@@ -28,7 +27,7 @@ namespace Server.Controllers {
 		public WebSocketController(ConfigManager configManager, StockQuotesInitiator initiator) {
 			ConfigManager = configManager;
 			Initiator = initiator;
-			Initiator.Application.MessageReceived += (sender, e) => {
+			Initiator.Application.MessageReceived += (_, e) => {
 				var message = new TDFData(e.Message);
 				StockManger.Add(message.WindCode.Obj, new Quote(message));
 			};
@@ -61,43 +60,10 @@ namespace Server.Controllers {
 
 		/// <summary>
 		/// </summary>
-		/// <param name="ids"></param>
-		/// <returns></returns>
-		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
-			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
-			var raw = await GetAsync(uri);
-			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
-			var result = new List<Quote>(rows.Count);
-			foreach (var row in rows) {
-				var parts = row.Split('=').ToArray();
-				var id = parts[0][^8..];
-				var content = parts[1][1..^3];
-				parts = content.Split(',').ToArray();
-				var price = new Quote {
-					OpeningPrice = Convert.ToDecimal(parts[1]),
-					PreClosingPrice = Convert.ToDecimal(parts[2]),
-					ClosingPrice = Convert.ToDecimal(parts[3]),
-					HighestPrice = Convert.ToDecimal(parts[4]),
-					LowestPrice = Convert.ToDecimal(parts[5]),
-					TotalVolume = Convert.ToInt64(parts[8]),
-					TotalTurnover = Convert.ToDecimal(parts[9]),
-					AskPrices = new[] {Convert.ToDecimal(parts[11]), Convert.ToDecimal(parts[13]), Convert.ToDecimal(parts[15]), Convert.ToDecimal(parts[17]), Convert.ToDecimal(parts[19])},
-					AskVolumes = new[] {Convert.ToInt64(parts[10]), Convert.ToInt64(parts[12]), Convert.ToInt64(parts[14]), Convert.ToInt64(parts[16]), Convert.ToInt64(parts[18])},
-					BidPrices = new[] {Convert.ToDecimal(parts[21]), Convert.ToDecimal(parts[23]), Convert.ToDecimal(parts[25]), Convert.ToDecimal(parts[27]), Convert.ToDecimal(parts[29])},
-					BidVolumes = new[] {Convert.ToInt64(parts[20]), Convert.ToInt64(parts[22]), Convert.ToInt64(parts[24]), Convert.ToInt64(parts[26]), Convert.ToInt64(parts[28])},
-					TradingTime = DateTime.Parse($"{parts[30]}T{parts[31]}")
-				};
-				result.Add(price);
-			}
-			return result;
-		}
-
-		/// <summary>
-		/// </summary>
 		/// <returns></returns>
 		[HttpGet("/api/ws/stock/list")]
 		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public virtual async Task<IActionResult> StartStockListUpdating([FromQuery] [Required] string token) {
+		public async Task<IActionResult> StartStockListUpdating([FromQuery] [Required] string token) {
 			if (!HttpContext.WebSockets.IsWebSocketRequest) {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 				return BadRequest("Not a websocket request");
@@ -109,7 +75,7 @@ namespace Server.Controllers {
 				AutoReset = false
 			};
 			var lastElapsedFinished = false;
-			messageSender.Elapsed += (sender, args) => {
+			messageSender.Elapsed += (_, _) => {
 				if (!lastElapsedFinished || StockManger == null)
 					goto ResetTimer;
 				var prices = StockManger.GetList(token);
@@ -128,11 +94,15 @@ namespace Server.Controllers {
 			messageSender.Start();
 			var result = await webSocket.Listen(
 				(text, type) => {
+					if (type != WebSocketMessageType.Text)
+						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
 						StockManger = new StockManager(ids);
 					}
-					catch (Exception) { }
+					catch (Exception) {
+						// ignored
+					}
 				}
 			);
 			messageSender.Close();
@@ -145,7 +115,7 @@ namespace Server.Controllers {
 		/// <returns></returns>
 		[HttpGet("/api/ws/stock")]
 		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public virtual async Task<IActionResult> StartStockUpdating([FromQuery] [Required] string token, [FromQuery] [Required] string id) {
+		public async Task<IActionResult> StartStockUpdating([FromQuery] [Required] string token, [FromQuery] [Required] string id) {
 			if (!HttpContext.WebSockets.IsWebSocketRequest) {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 				return BadRequest("Not a websocket request");
@@ -157,7 +127,7 @@ namespace Server.Controllers {
 				AutoReset = false
 			};
 			var lastElapsedFinished = false;
-			messageSender.Elapsed += (sender, args) => {
+			messageSender.Elapsed += (_, _) => {
 				if (!lastElapsedFinished || StockManger == null)
 					goto ResetTimer;
 				var prices = StockManger.GetSingle(token, id);
@@ -176,11 +146,15 @@ namespace Server.Controllers {
 			messageSender.Start();
 			var result = await webSocket.Listen(
 				(text, type) => {
+					if (type != WebSocketMessageType.Text)
+						return;
 					try {
 						var ids = JsonConvert.DeserializeObject<string[]>(text);
 						StockManger = new StockManager(ids);
 					}
-					catch (Exception) { }
+					catch (Exception) {
+						// ignored
+					}
 				}
 			);
 			messageSender.Close();
@@ -255,13 +229,13 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="webSocket"></param>
-		/// <param name="OnReceived"></param>
+		/// <param name="onReceived"></param>
 		/// <returns></returns>
-		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Action<string, WebSocketMessageType> OnReceived = null) {
+		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Action<string, WebSocketMessageType> onReceived = null) {
 			var (result, buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
-			OnReceived?.Invoke(Encoding.UTF8.GetString(buffer), result.MessageType);
+			onReceived?.Invoke(Encoding.UTF8.GetString(buffer), result.MessageType);
 			if (!result.CloseStatus.HasValue)
-				result = await webSocket.Listen(OnReceived);
+				result = await webSocket.Listen(onReceived);
 			return result;
 		}
 	}

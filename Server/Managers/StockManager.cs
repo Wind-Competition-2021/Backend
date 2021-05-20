@@ -15,7 +15,7 @@ namespace Server.Managers {
 		/// <summary>
 		/// </summary>
 		/// <param name="ids"></param>
-		public StockManager(string[] ids) : this(ids, TimeSpan.FromMinutes(5)) { }
+		public StockManager(IEnumerable<string> ids) : this(ids, TimeSpan.FromMinutes(5)) { }
 
 		/// <summary>
 		/// </summary>
@@ -58,7 +58,7 @@ namespace Server.Managers {
 
 		/// <summary>
 		/// </summary>
-		protected Dictionary<string, (List<Quote> PlayBack, List<Quote> Recent)> Quotes { get; }
+		protected Dictionary<string, (List<Quote> PlayBack, List<Quote> Recent)> Quotes { get; } = new();
 
 		/// <summary>
 		/// </summary>
@@ -67,115 +67,6 @@ namespace Server.Managers {
 		/// <summary>
 		/// </summary>
 		protected Dictionary<string, DateTime> LastListPushTime { get; } = new();
-
-		/// <summary>
-		/// </summary>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public bool Contains(string id) => Quotes.ContainsKey(id);
-
-		/// <summary>
-		/// </summary>
-		/// <param name="id"></param>
-		/// <param name="quote"></param>
-		public void Add(string id, Quote quote) => Quotes[id].Recent.Add(quote);
-
-		/// <summary>
-		/// </summary>
-		/// <param name="token"></param>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public List<RealTimePrice> GetSingle(string token, string id) {
-			var now = DateTime.Now;
-			if (!LastSinglePushTime.ContainsKey(token)) {
-				LastSinglePushTime[token] = now;
-				return Quotes[id]
-					.PlayBack.Select(
-						quote => new RealTimePrice {
-							Id = id,
-							Opening = (int)quote.OpeningPrice,
-							Closing = (int)quote.ClosingPrice,
-							Highest = (int)quote.HighestPrice,
-							Lowest = (int)quote.LowestPrice,
-							Volume = quote.TotalVolume,
-							Turnover = (long)quote.TotalTurnover,
-							Time = quote.TradingTime,
-							PreClosing = (int)quote.PreClosingPrice
-						}
-					)
-					.ToList();
-			}
-			LastSinglePushTime[token] = now;
-			return Quotes[id]
-				.Recent
-				.Where(quote => quote.TradingTime >= now)
-				.Select(
-					quote => new RealTimePrice {
-						Id = id,
-						Opening = (int)quote.OpeningPrice,
-						Closing = (int)quote.ClosingPrice,
-						Highest = (int)quote.HighestPrice,
-						Lowest = (int)quote.LowestPrice,
-						Volume = quote.TotalVolume,
-						Turnover = (long)quote.TotalTurnover,
-						Time = quote.TradingTime,
-						PreClosing = (int)quote.PreClosingPrice
-					}
-				)
-				.ToList();
-		}
-
-		/// <summary>
-		/// </summary>
-		/// <param name="token"></param>
-		/// <returns></returns>
-		public List<RealTimePrice> GetList(string token) {
-			var now = DateTime.Now;
-			if (!LastListPushTime.ContainsKey(token)) {
-				LastListPushTime[token] = now;
-				return Quotes.Select(
-						quotes => {
-							var (id, value) = quotes;
-							var quote = value.Recent.Count > 0
-								? value.Recent.Last()
-								: value.PlayBack.LastOrDefault();
-							return new RealTimePrice {
-								Id = id,
-								Opening = (int)quote.OpeningPrice,
-								Closing = (int)quote.ClosingPrice,
-								Highest = (int)quote.HighestPrice,
-								Lowest = (int)quote.LowestPrice,
-								Volume = quote.TotalVolume,
-								Turnover = (long)quote.TotalTurnover,
-								Time = quote.TradingTime,
-								PreClosing = (int)quote.PreClosingPrice
-							};
-						}
-					)
-					.ToList();
-			}
-			LastListPushTime[token] = now;
-			return Quotes
-				.Where(quotes => quotes.Value.Recent.LastOrDefault()?.TradingTime >= now)
-				.Select(
-					quotes => {
-						var (id, value) = quotes;
-						var quote = value.Recent.Last();
-						return new RealTimePrice {
-							Id = id,
-							Opening = (int)quote.OpeningPrice,
-							Closing = (int)quote.ClosingPrice,
-							Highest = (int)quote.HighestPrice,
-							Lowest = (int)quote.LowestPrice,
-							Volume = quote.TotalVolume,
-							Turnover = (long)quote.TotalTurnover,
-							Time = quote.TradingTime,
-							PreClosing = (int)quote.PreClosingPrice
-						};
-					}
-				)
-				.ToList();
-		}
 
 		/// <summary>
 		/// </summary>
@@ -199,12 +90,15 @@ namespace Server.Managers {
 			var raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
-			foreach (var row in rows) {
-				var parts = row.Split('=').ToArray();
-				var id = parts[0][^8..];
-				var content = parts[1][1..^3];
-				parts = content.Split(',').ToArray();
-				var price = new Quote {
+			result.AddRange(
+				from row in rows
+				select row.Split('=').ToArray()
+				into parts
+				let id = parts[0][^8..]
+				let content = parts[1][1..^3]
+				select content.Split(',').ToArray()
+				into parts
+				select new Quote {
 					OpeningPrice = Convert.ToDecimal(parts[1]),
 					PreClosingPrice = Convert.ToDecimal(parts[2]),
 					ClosingPrice = Convert.ToDecimal(parts[3]),
@@ -217,10 +111,74 @@ namespace Server.Managers {
 					BidPrices = new[] {Convert.ToDecimal(parts[21]), Convert.ToDecimal(parts[23]), Convert.ToDecimal(parts[25]), Convert.ToDecimal(parts[27]), Convert.ToDecimal(parts[29])},
 					BidVolumes = new[] {Convert.ToInt64(parts[20]), Convert.ToInt64(parts[22]), Convert.ToInt64(parts[24]), Convert.ToInt64(parts[26]), Convert.ToInt64(parts[28])},
 					TradingTime = DateTime.Parse($"{parts[30]}T{parts[31]}")
-				};
-				result.Add(price);
-			}
+				}
+			);
 			return result;
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public bool Contains(string id) => Quotes.ContainsKey(id);
+
+		/// <summary>
+		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="quote"></param>
+		public void Add(string id, Quote quote) => Quotes[id].Recent.Add(quote);
+
+		/// <summary>
+		/// </summary>
+		/// <param name="token"></param>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public List<RealTimePrice> GetSingle(string token, string id) {
+			var now = DateTime.Now;
+			if (!LastSinglePushTime.ContainsKey(token)) {
+				LastSinglePushTime[token] = now;
+				return Quotes[id]
+					.PlayBack.Select(quote => new RealTimePrice(quote, id))
+					.ToList();
+			}
+			LastSinglePushTime[token] = now;
+			return Quotes[id]
+				.Recent
+				.Where(quote => quote.TradingTime >= now)
+				.Select(quote => new RealTimePrice(quote, id))
+				.ToList();
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <param name="token"></param>
+		/// <returns></returns>
+		public List<RealTimePrice> GetList(string token) {
+			var now = DateTime.Now;
+			if (!LastListPushTime.ContainsKey(token)) {
+				LastListPushTime[token] = now;
+				return Quotes.Select(
+						quotes => {
+							var (id, (playBack, recent)) = quotes;
+							var quote = recent.Count > 0
+								? recent.Last()
+								: playBack.LastOrDefault();
+							return new RealTimePrice(quote, id);
+						}
+					)
+					.ToList();
+			}
+			LastListPushTime[token] = now;
+			return Quotes
+				.Where(quotes => quotes.Value.Recent.LastOrDefault()?.TradingTime >= now)
+				.Select(
+					quotes => {
+						var (id, value) = quotes;
+						var quote = value.Recent.Last();
+						return new RealTimePrice(quote, id);
+					}
+				)
+				.ToList();
 		}
 	}
 }
