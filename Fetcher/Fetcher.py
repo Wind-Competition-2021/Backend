@@ -207,7 +207,7 @@ def getWeeklyPrice(id: str, begin: str, end: str, frequency: str = "week", rehab
 
 
 startTime = Time(9, 30)
-endTime = Time(23)
+endTime = Time(15)
 
 
 def checkTradeStatus(date: str = ""):
