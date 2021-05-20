@@ -15,20 +15,22 @@ namespace Server.Managers {
 		/// <summary>
 		/// </summary>
 		/// <param name="ids"></param>
-		public StockManager(IEnumerable<string> ids) : this(ids, TimeSpan.FromMinutes(5)) { }
+		public StockManager(string[] ids) : this(ids, TimeSpan.FromSeconds(10)) { }
 
 		/// <summary>
 		/// </summary>
 		/// <param name="ids"></param>
 		/// <param name="interval"></param>
-		public StockManager(IEnumerable<string> ids, TimeSpan interval) {
+		public StockManager(string[] ids, TimeSpan interval) {
 			foreach (var id in ids)
 				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
 			Timer = new Timer(interval.TotalMilliseconds);
 			var lastElapsedFinished = true;
 			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15))
+				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15)) {
 					Timer.Stop();
+					Stopped = true;
+				}
 				if (!lastElapsedFinished)
 					return;
 				var tasks = new List<Task>(Quotes.Count);
@@ -36,21 +38,39 @@ namespace Server.Managers {
 					var id = stock.Key;
 					var (playBack, recent) = stock.Value;
 					tasks.Add(
-						new Task(
-							async () => {
-								recent.Clear();
-								playBack.AddRange(await GetRealTimeQuote(id));
-							}
-						)
+						GetRealTimeQuote(id)
+							.ContinueWith(
+								task => {
+									var result = task.Result;
+									playBack.AddRange(result);
+									recent.Clear();
+								}
+							)
 					);
 				}
 				lastElapsedFinished = false;
-				Task.WhenAll(tasks).ContinueWith(_ => lastElapsedFinished = true);
+				Task.WhenAll(tasks)
+					.ContinueWith(
+						_ =>
+							lastElapsedFinished = true
+					);
 			}
 			Timer.Elapsed += Elapsed;
-			Elapsed(null, null);
-			Timer.Start();
+			GetRealTimeQuote(ids)
+				.ContinueWith(
+					task => {
+						var result = task.Result;
+						for (var i = 0; i < ids.Length; ++i)
+							Quotes[ids[i]].PlayBack.Add(result[i]);
+						Timer.Start();
+					}
+				)
+				.Wait();
 		}
+
+		/// <summary>
+		/// </summary>
+		public bool Stopped { get; private set; }
 
 		/// <summary>
 		/// </summary>
@@ -134,6 +154,8 @@ namespace Server.Managers {
 		/// <param name="id"></param>
 		/// <returns></returns>
 		public List<RealTimePrice> GetSingle(string token, string id) {
+			if (Stopped)
+				return null;
 			var now = DateTime.Now;
 			if (!LastSinglePushTime.ContainsKey(token)) {
 				LastSinglePushTime[token] = now;
@@ -141,12 +163,15 @@ namespace Server.Managers {
 					.PlayBack.Select(quote => new RealTimePrice(quote, id))
 					.ToList();
 			}
-			LastSinglePushTime[token] = now;
-			return Quotes[id]
+			var time = LastSinglePushTime[token];
+			var result = Quotes[id]
 				.Recent
-				.Where(quote => quote.TradingTime >= now)
+				.Where(quote => quote.TradingTime >= time)
 				.Select(quote => new RealTimePrice(quote, id))
 				.ToList();
+			if (result.Count > 0)
+				LastSinglePushTime[token] = now;
+			return result;
 		}
 
 		/// <summary>
@@ -154,6 +179,8 @@ namespace Server.Managers {
 		/// <param name="token"></param>
 		/// <returns></returns>
 		public List<RealTimePrice> GetList(string token) {
+			if (Stopped)
+				return null;
 			var now = DateTime.Now;
 			if (!LastListPushTime.ContainsKey(token)) {
 				LastListPushTime[token] = now;
@@ -168,9 +195,9 @@ namespace Server.Managers {
 					)
 					.ToList();
 			}
-			LastListPushTime[token] = now;
-			return Quotes
-				.Where(quotes => quotes.Value.Recent.LastOrDefault()?.TradingTime >= now)
+			var time = LastListPushTime[token];
+			var result = Quotes
+				.Where(quotes => quotes.Value.Recent.LastOrDefault()?.TradingTime >= time)
 				.Select(
 					quotes => {
 						var (id, value) = quotes;
@@ -179,6 +206,20 @@ namespace Server.Managers {
 					}
 				)
 				.ToList();
+			if (result.Count == 0)
+				result = Quotes
+					.Where(quotes => quotes.Value.PlayBack.LastOrDefault()?.TradingTime >= time)
+					.Select(
+						quotes => {
+							var (id, value) = quotes;
+							var quote = value.PlayBack.Last();
+							return new RealTimePrice(quote, id);
+						}
+					)
+					.ToList();
+			if (result.Count > 0)
+				LastListPushTime[token] = now;
+			return result;
 		}
 	}
 }
