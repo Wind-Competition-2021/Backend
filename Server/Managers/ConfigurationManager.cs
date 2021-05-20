@@ -17,9 +17,9 @@ namespace Server.Managers {
 		public static Configuration DefaultConfiguration
 			=> new() {
 				PinnedStocks = new List<string>(),
-				RefreshInterval = new ConfigurationRefreshInterval {
-					List = 5,
-					Single = 60
+				RefreshInterval = new RefreshInterval {
+					List = TimeSpan.FromSeconds(5),
+					Trend = TimeSpan.FromMinutes(1)
 				}
 			};
 

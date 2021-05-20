@@ -21,7 +21,7 @@ namespace Server.Models {
 		///     List and trend refresh interval
 		/// </summary>
 		[DataMember(Name = "refreshInterval")]
-		public ConfigurationRefreshInterval RefreshInterval { get; set; }
+		public RefreshInterval RefreshInterval { get; set; }
 
 		/// <summary>
 		///     Returns true if Configuration instances are equal

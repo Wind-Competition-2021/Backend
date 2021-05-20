@@ -8,25 +8,27 @@ namespace Server.Models {
 	///     Refresh interval, used in Configuration
 	/// </summary>
 	[DataContract]
-	public class ConfigurationRefreshInterval : IEquatable<ConfigurationRefreshInterval> {
+	public class RefreshInterval : IEquatable<RefreshInterval> {
 		/// <summary>
 		///     Realtime stock list refreshment interval, unit: second
 		/// </summary>
+		[JsonConverter(typeof(TimeSpanConverter))]
 		[DataMember(Name = "list")]
-		public int? List { get; set; }
+		public TimeSpan? List { get; set; }
 
 		/// <summary>
 		///     Realtime single stock trend refreshment interval, unit: second
 		/// </summary>
-		[DataMember(Name = "single")]
-		public int? Single { get; set; }
+		[JsonConverter(typeof(TimeSpanConverter))]
+		[DataMember(Name = "trend")]
+		public TimeSpan? Trend { get; set; }
 
 		/// <summary>
 		///     Returns true if ConfigurationRefreshInterval instances are equal
 		/// </summary>
 		/// <param name="other">Instance of ConfigurationRefreshInterval to be compared</param>
 		/// <returns>Boolean</returns>
-		public bool Equals(ConfigurationRefreshInterval other) {
+		public bool Equals(RefreshInterval other) {
 			if (other is null)
 				return false;
 			if (ReferenceEquals(this, other))
@@ -39,9 +41,9 @@ namespace Server.Models {
 					List.Equals(other.List)
 				) &&
 				(
-					Single == other.Single ||
-					Single != null &&
-					Single.Equals(other.Single)
+					Trend == other.Trend ||
+					Trend != null &&
+					Trend.Equals(other.Trend)
 				);
 		}
 
@@ -53,7 +55,7 @@ namespace Server.Models {
 			var sb = new StringBuilder();
 			sb.Append("class ConfigurationRefreshInterval {\n");
 			sb.Append("  _List: ").Append(List).Append('\n');
-			sb.Append("  Single: ").Append(Single).Append('\n');
+			sb.Append("  Single: ").Append(Trend).Append('\n');
 			sb.Append("}\n");
 			return sb.ToString();
 		}
@@ -74,7 +76,7 @@ namespace Server.Models {
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj.GetType() == GetType() && Equals((ConfigurationRefreshInterval)obj);
+			return obj.GetType() == GetType() && Equals((RefreshInterval)obj);
 		}
 
 		/// <summary>
@@ -88,8 +90,8 @@ namespace Server.Models {
 				// Suitable nullity checks etc, of course :)
 				if (List != null)
 					hashCode = hashCode * 59 + List.GetHashCode();
-				if (Single != null)
-					hashCode = hashCode * 59 + Single.GetHashCode();
+				if (Trend != null)
+					hashCode = hashCode * 59 + Trend.GetHashCode();
 				return hashCode;
 			}
 		}
@@ -97,11 +99,20 @@ namespace Server.Models {
 		#region Operators
 		#pragma warning disable 1591
 
-		public static bool operator ==(ConfigurationRefreshInterval left, ConfigurationRefreshInterval right) => Equals(left, right);
+		public static bool operator ==(RefreshInterval left, RefreshInterval right) => Equals(left, right);
 
-		public static bool operator !=(ConfigurationRefreshInterval left, ConfigurationRefreshInterval right) => !Equals(left, right);
+		public static bool operator !=(RefreshInterval left, RefreshInterval right) => !Equals(left, right);
 
 		#pragma warning restore 1591
 		#endregion Operators
+	}
+
+	/// <inheritdoc />
+	public class TimeSpanConverter : JsonConverter<TimeSpan> {
+		/// <inheritdoc />
+		public override void WriteJson(JsonWriter writer, TimeSpan value, JsonSerializer serializer) => writer.WriteValue(value.TotalSeconds);
+
+		/// <inheritdoc />
+		public override TimeSpan ReadJson(JsonReader reader, Type objectType, TimeSpan existingValue, bool hasExistingValue, JsonSerializer serializer) => TimeSpan.FromSeconds(Convert.ToDouble((string)reader.Value));
 	}
 }

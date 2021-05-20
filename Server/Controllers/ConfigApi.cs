@@ -71,10 +71,10 @@ namespace Server.Controllers {
 		public IActionResult ModifyConfig([FromBody] Configuration body) {
 			var config = ConfigurationManager[Request.Headers["token"]];
 			if (body.RefreshInterval != null) {
-				if (body.RefreshInterval.Single.HasValue)
-					config.RefreshInterval.Single = body.RefreshInterval.Single;
+				if (body.RefreshInterval.Trend.HasValue)
+					config.RefreshInterval.Trend = body.RefreshInterval.Trend;
 				if (body.RefreshInterval.List.HasValue)
-					config.RefreshInterval.Single = body.RefreshInterval.List;
+					config.RefreshInterval.Trend = body.RefreshInterval.List;
 			}
 			if (body.PinnedStocks != null)
 				config.PinnedStocks = body.PinnedStocks;

@@ -173,21 +173,21 @@ namespace Server.Managers {
 		/// <param name="token"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public List<RealTimePrice> GetSingle(string token, string id) {
+		public List<RealtimePrice> GetSingle(string token, string id) {
 			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
 			if (!LastSinglePushTime.ContainsKey(token)) {
 				LastSinglePushTime[token] = now;
 				return Quotes[id]
-					.PlayBack.Select(quote => new RealTimePrice(quote, id))
+					.PlayBack.Select(quote => new RealtimePrice(quote, id))
 					.ToList();
 			}
 			var time = LastSinglePushTime[token];
 			var result = Quotes[id]
 				.Recent.Concat(Quotes[id].PlayBack)
 				.Where(quote => quote.TradingTime >= time)
-				.Select(quote => new RealTimePrice(quote, id))
+				.Select(quote => new RealtimePrice(quote, id))
 				.ToList();
 
 			if (result.Count > 0)
@@ -199,7 +199,7 @@ namespace Server.Managers {
 		/// </summary>
 		/// <param name="token"></param>
 		/// <returns></returns>
-		public List<RealTimePrice> GetList(string token) {
+		public List<RealtimePrice> GetList(string token) {
 			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
@@ -211,7 +211,7 @@ namespace Server.Managers {
 							var quote = recent.Count > 0
 								? recent.Last()
 								: playBack.LastOrDefault();
-							return new RealTimePrice(quote, id);
+							return new RealtimePrice(quote, id);
 						}
 					)
 					.ToList();
@@ -223,7 +223,7 @@ namespace Server.Managers {
 					quotes => {
 						var (id, value) = quotes;
 						var quote = value.Recent.Last();
-						return new RealTimePrice(quote, id);
+						return new RealtimePrice(quote, id);
 					}
 				)
 				.ToList();
@@ -234,7 +234,7 @@ namespace Server.Managers {
 						quotes => {
 							var (id, value) = quotes;
 							var quote = value.PlayBack.Last();
-							return new RealTimePrice(quote, id);
+							return new RealtimePrice(quote, id);
 						}
 					)
 					.ToList();

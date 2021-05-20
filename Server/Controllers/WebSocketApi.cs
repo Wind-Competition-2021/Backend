@@ -8,12 +8,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Initiator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using QuickFix.Fields;
 using QuickFix.FIX44;
 using Server.Managers;
 using Server.Models;
+using Server.Security;
 using Quote = Initiator.Quote;
 using Timer = System.Timers.Timer;
 
@@ -57,9 +59,9 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <returns></returns>
-		[HttpGet("/api/ws/stock/list")]
-		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public Task<IActionResult> UpdateStockList([FromQuery] [Required] string token)
+		[HttpGet("/api/quote/realtime/list")]
+		[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
+		public Task<IActionResult> UpdateQuotesList([FromQuery] [Required] string token)
 			=> UpdateQuotes(
 				token,
 				(webSocket, config) => {
@@ -76,9 +78,9 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <returns></returns>
-		[HttpGet("/api/ws/stock")]
-		//[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
-		public Task<IActionResult> UpdateStock([FromQuery] [Required] string token, [FromQuery] [Required] string id)
+		[HttpGet("/api/quote/realtime/trend")]
+		[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
+		public Task<IActionResult> UpdateQuotesTrend([FromQuery] [Required] string token, [FromQuery] [Required] string id)
 			=> UpdateQuotes(
 				token,
 				(webSocket, config) => {
@@ -89,7 +91,7 @@ namespace Server.Controllers {
 						price.Pinned = config.PinnedStocks.Contains(id);
 					return webSocket.SendAsync(prices.ToArray());
 				},
-				config => config.RefreshInterval.Single!.Value * 1000
+				config => config.RefreshInterval.Trend!.Value * 1000
 			);
 
 		/// <summary>
@@ -105,7 +107,7 @@ namespace Server.Controllers {
 			return await reader.ReadToEndAsync();
 		}
 
-		private async Task<IActionResult> UpdateQuotes(string token, Func<WebSocket, Configuration, Task> getTasks, Func<Configuration, int> getInterval) {
+		private async Task<IActionResult> UpdateQuotes(string token, Func<WebSocket, Configuration, Task> getTasks, Func<Configuration, TimeSpan> getInterval) {
 			//Reject if not websocket
 			if (!HttpContext.WebSockets.IsWebSocketRequest) {
 				HttpContext.Response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -113,7 +115,7 @@ namespace Server.Controllers {
 			}
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 			var messageSender = new Timer {
-				Interval = getInterval(ConfigurationManager[token]),
+				Interval = getInterval(ConfigurationManager[token]).TotalMilliseconds,
 				AutoReset = false
 			};
 			//Indicate whether the last push has finished
@@ -126,7 +128,7 @@ namespace Server.Controllers {
 				var task = getTasks(webSocket, ConfigurationManager[token]);
 				task?.ContinueWith(_ => lastElapsedFinished = true);
 			ResetTimer:
-				messageSender.Interval = getInterval(ConfigurationManager[token]);
+				messageSender.Interval = getInterval(ConfigurationManager[token]).TotalMilliseconds;
 				messageSender.Start();
 			}
 			messageSender.Elapsed += Elapsed;

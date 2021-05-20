@@ -9,17 +9,17 @@ namespace Server.Models {
 	///     Used for Realtime quotes
 	/// </summary>
 	[DataContract]
-	public class RealTimePrice : PriceBase, IEquatable<RealTimePrice> {
+	public class RealtimePrice : PriceBase, IEquatable<RealtimePrice> {
 		/// <summary>
 		///     Default constructor
 		/// </summary>
-		public RealTimePrice() { }
+		public RealtimePrice() { }
 
 		/// <summary>
 		/// </summary>
 		/// <param name="quote"></param>
 		/// <param name="id"></param>
-		public RealTimePrice(Quote quote, string id = null) {
+		public RealtimePrice(Quote quote, string id = null) {
 			if (!string.IsNullOrEmpty(id))
 				Id = id;
 			Opening = (int)(quote.OpeningPrice * 10000m);
@@ -55,7 +55,7 @@ namespace Server.Models {
 		/// </summary>
 		/// <param name="other">Instance of RealTimePrice to be compared</param>
 		/// <returns>Boolean</returns>
-		public bool Equals(RealTimePrice other) {
+		public bool Equals(RealtimePrice other) {
 			if (other is null)
 				return false;
 			if (ReferenceEquals(this, other))
@@ -98,7 +98,7 @@ namespace Server.Models {
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
-			return obj.GetType() == GetType() && Equals((RealTimePrice)obj);
+			return obj.GetType() == GetType() && Equals((RealtimePrice)obj);
 		}
 
 		/// <summary>
@@ -119,9 +119,9 @@ namespace Server.Models {
 		#region Operators
 		#pragma warning disable 1591
 
-		public static bool operator ==(RealTimePrice left, RealTimePrice right) => Equals(left, right);
+		public static bool operator ==(RealtimePrice left, RealtimePrice right) => Equals(left, right);
 
-		public static bool operator !=(RealTimePrice left, RealTimePrice right) => !Equals(left, right);
+		public static bool operator !=(RealtimePrice left, RealtimePrice right) => !Equals(left, right);
 
 		#pragma warning restore 1591
 		#endregion Operators
