@@ -72,7 +72,7 @@ namespace Server.Controllers {
 						price.Pinned = config.PinnedStocks.Contains(price.Id);
 					return webSocket.SendAsync(prices.ToArray());
 				},
-				config => config.RefreshInterval.List!.Value * 1000
+				config => config.RefreshInterval.List!.Value
 			);
 
 		/// <summary>
@@ -91,7 +91,7 @@ namespace Server.Controllers {
 						price.Pinned = config.PinnedStocks.Contains(id);
 					return webSocket.SendAsync(prices.ToArray());
 				},
-				config => config.RefreshInterval.Trend!.Value * 1000
+				config => config.RefreshInterval.Trend!.Value
 			);
 
 		/// <summary>
@@ -156,6 +156,7 @@ namespace Server.Controllers {
 			var result = (await Task.WhenAny(new[] {receive, send})).Result;
 			messageSender.Close();
 			await webSocket.CloseAsync(result.CloseStatus!.Value, result.CloseStatusDescription, CancellationToken.None);
+			RealtimeQuotesManager.RemoveToken(token);
 			return new EmptyResult();
 		}
 	}
