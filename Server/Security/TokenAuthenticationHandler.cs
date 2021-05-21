@@ -72,9 +72,9 @@ namespace Server.Security {
 			ISystemClock clock,
 			ConfigurationManager manager
 		) : base(options, logger, encoder, clock)
-			=> configurationManager = manager;
+			=> ConfigurationManager = manager;
 
-		private ConfigurationManager configurationManager { get; }
+		private ConfigurationManager ConfigurationManager { get; }
 
 		/// <summary>
 		///     Verify that token query exist and handle authorization.
@@ -82,9 +82,9 @@ namespace Server.Security {
 		protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
 			if (!Request.Query.ContainsKey("token"))
 				return Task.FromResult(AuthenticateResult.Fail("Missing Authorization Query"));
-			if (!configurationManager.Contains(Request.Headers["token"]))
+			if (!ConfigurationManager.Contains(Request.Query["token"]))
 				return Task.FromResult(AuthenticateResult.Fail("Token Not Found"));
-			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Headers["token"])}, "ApiKey");
+			var identity = new ClaimsIdentity(new Claim[] {new(ClaimTypes.Hash, Request.Query["token"])}, "ApiKey");
 			var principal = new ClaimsPrincipal(identity);
 			var ticket = new AuthenticationTicket(principal, Scheme.Name);
 			return Task.FromResult(AuthenticateResult.Success(ticket));
