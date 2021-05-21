@@ -21,127 +21,129 @@ class HiddenPrints:
         System.stdout = self._original_stdout
 
 
-rawMapper: Callable[[str], str] = lambda x: x
-priceMapper: Callable[[str], int] = lambda x: int(float(x)*10000)
-rateMapper: Callable[[str], int] = lambda x: None if x == None or x == "" else int(
+default: Callable[[str], str] = lambda x: x
+toPrice: Callable[[str], int] = lambda x: int(float(x)*10000)
+toRate: Callable[[str], int] = lambda x: None if x == None or x == "" else int(
     float(x)*1000000)
-intMapper: Callable[[str], int] = lambda x: int(x)
-floorMapper: Callable[[
+toInt: Callable[[str], int] = lambda x: int(x)
+toFloat: Callable[[
+    str], float] = lambda x: None if x == None or x == "" else float(x)
+toFloored: Callable[[
     str], int] = lambda x: None if x == None or x == "" else int(x.split(".")[0])
-timeMapper: Callable[[
+toTime: Callable[[
     str], str] = lambda time: f"{time[0:4]}-{time[4:6]}-{time[6:8]}T{time[8:10]}:{time[10:12]}:{time[12:14]}.{time[14:]}Z"
-rehabilitationMapper: Callable[[
+toRehabilitation: Callable[[
     str], str] = lambda x: "1" if x == "post" else "2" if x == "pre" else "3"
 
 priceMapBase: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "open": ("opening", priceMapper),
-    "close": ("closing", priceMapper),
-    "high": ("highest", priceMapper),
-    "low": ("lowest", priceMapper),
-    "volume": ("volume", intMapper),
-    "amount": ("turnover", priceMapper),
-    "adjustflag": ("rehabilitation", rehabilitationMapper)
+    "open": ("opening", toPrice),
+    "close": ("closing", toPrice),
+    "high": ("highest", toPrice),
+    "low": ("lowest", toPrice),
+    "volume": ("volume", toInt),
+    "amount": ("turnover", toPrice),
+    "adjustflag": ("rehabilitation", toRehabilitation)
 }
 getStockInfoMap: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "code": ("id", rawMapper),
-    "code_name": ("name", rawMapper),
-    "ipoDate": ("listedDate", rawMapper),
-    "outDate": ("delistedDate", rawMapper),
+    "code": ("id", default),
+    "code_name": ("name", default),
+    "ipoDate": ("listedDate", default),
+    "outDate": ("delistedDate", default),
     "type": ("type", lambda x: "stock" if x == "1" else "index" if x == "2" else "other"),
-    "industry": ("industry", rawMapper),
-    "industryClassification": ("classification", rawMapper)
+    "industry": ("industry", default),
+    "industryClassification": ("classification", default)
 }
 getStockListMap: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "code": ("id", rawMapper),
-    "code_name": ("name", rawMapper)
+    "code": ("id", default),
+    "code_name": ("name", default)
 }
 getMinutelyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase | {
-    "time": ("time", timeMapper)
+    "time": ("time", toTime)
 }
 getDailyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase | {
-    "date": ("date", rawMapper),
-    "preclose": ("preClosing", priceMapper),
-    "turn": ("turnoverRate", rateMapper),
-    "peTTM": ("per", rateMapper),
-    "pbMRQ": ("pbr", rateMapper),
-    "psTTM": ("psr", rateMapper),
-    "pcfNcfTTM": ("pcfr", rateMapper),
+    "date": ("date", default),
+    "preclose": ("preClosing", toPrice),
+    "turn": ("turnoverRate", toRate),
+    "peTTM": ("per", toRate),
+    "pbMRQ": ("pbr", toRate),
+    "psTTM": ("psr", toRate),
+    "pcfNcfTTM": ("pcfr", toRate),
     "tradestatus": ("stopped", lambda x: x == "0"),
     "isST": ("specialTreatment", lambda x: x == "1")
 }
 getWeeklyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase | {
-    "date": ("date", rawMapper),
-    "turn": ("turnoverRate", rateMapper),
+    "date": ("date", default),
+    "turn": ("turnoverRate", toRate),
 }
 
 statementMapBase: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "code": ("id", rawMapper),
-    "pubDate": ("publishDate", rawMapper),
-    "statDate": ("statDate", rawMapper),
+    "code": ("id", default),
+    "pubDate": ("publishDate", default),
+    "statDate": ("statDate", default),
 }
 getProfitabilityMap: dict[str, tuple[str, Callable[[str], Any]]] = statementMapBase | {
-    "roeAvg": ("roe", rateMapper),
-    "npMargin": ("npm", rateMapper),
-    "gpMargin": ("gpm", rateMapper),
-    "netProfit": ("np", floorMapper),
-    "epsTTM": ("eps", rateMapper),
-    "MBRevenue": ("mbr", floorMapper),
-    "totalShare": ("ts", floorMapper),
-    "liqaShare": ("cs", floorMapper)
+    "roeAvg": ("roe", toFloat),
+    "npMargin": ("npm", toFloat),
+    "gpMargin": ("gpm", toFloat),
+    "netProfit": ("np", toFloored),
+    "epsTTM": ("eps", toFloat),
+    "MBRevenue": ("mbr", toFloored),
+    "totalShare": ("ts", toFloored),
+    "liqaShare": ("cs", toFloored)
 }
 getOperationalCapabilityMap: dict[str, tuple[str, Callable[[str], Any]]] = statementMapBase | {
-    "NRTurnRatio": ("rtr", rateMapper),
-    "NRTurnDays": ("rtd", rateMapper),
-    "INVTurnRatio": ("itr", rateMapper),
-    "INVTurnDays": ("itd", rateMapper),
-    "CATurnRatio": ("catr", rateMapper),
-    "AssetTurnRatio": ("tatr", rateMapper)
+    "NRTurnRatio": ("rtr", toFloat),
+    "NRTurnDays": ("rtd", toFloat),
+    "INVTurnRatio": ("itr", toFloat),
+    "INVTurnDays": ("itd", toFloat),
+    "CATurnRatio": ("catr", toFloat),
+    "AssetTurnRatio": ("tatr", toFloat)
 }
 getGrowthAbilityMap: dict[str, tuple[str, Callable[[str], Any]]] = statementMapBase | {
-    "YOYEquity": ("nagr", rateMapper),
-    "YOYAsset": ("tagr", rateMapper),
-    "YOYNI": ("npgr", rateMapper),
-    "YOYEPSBasic": ("bepsgr", rateMapper),
-    "YOYPNI": ("npasgr", rateMapper)
+    "YOYEquity": ("nagr", toFloat),
+    "YOYAsset": ("tagr", toFloat),
+    "YOYNI": ("npgr", toFloat),
+    "YOYEPSBasic": ("bepsgr", toFloat),
+    "YOYPNI": ("npasgr", toFloat)
 }
 getSolvencyMap: dict[str, tuple[str, Callable[[str], Any]]] = statementMapBase | {
-    "currentRatio": ("cr", rateMapper),
-    "quickRatio": ("qr", rateMapper),
-    "cashRatio": ("car", rateMapper),
-    "YOYLiability": ("tlgr", rateMapper),
-    "liabilityToAsset": ("dar", rateMapper),
-    "assetToEquity": ("em", rateMapper)
+    "currentRatio": ("cr", toFloat),
+    "quickRatio": ("qr", toFloat),
+    "cashRatio": ("car", toFloat),
+    "YOYLiability": ("tlgr", toFloat),
+    "liabilityToAsset": ("dar", toFloat),
+    "assetToEquity": ("em", toFloat)
 }
 getCashFlowMap: dict[str, tuple[str, Callable[[str], Any]]] = statementMapBase | {
-    "CAToAsset": ("catar", rateMapper),
-    "NCAToAsset": ("fatar", rateMapper),
-    "tangibleAssetToAsset": ("tatar", rateMapper),
-    "ebitToInterest": ("ipm", rateMapper),
-    "CFOToOR": ("oncforr", rateMapper),
-    "CFOToNP": ("oncfnpr", rateMapper),
-    "CFOToGr": ("oncfgrr", rateMapper)
+    "CAToAsset": ("catar", toFloat),
+    "NCAToAsset": ("fatar", toFloat),
+    "tangibleAssetToAsset": ("tatar", toFloat),
+    "ebitToInterest": ("ipm", toFloat),
+    "CFOToOR": ("oncforr", toFloat),
+    "CFOToNP": ("oncfnpr", toFloat),
+    "CFOToGr": ("oncfgrr", toFloat)
 }
 getPerformanceReportMap: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "code": ("id", rawMapper),
-    "performanceExpPubDate": ("publishDate", rawMapper),
-    "performanceExpStatDate": ("statDate", rawMapper),
-    "performanceExpUpdateDate": ("updateDate", rawMapper),
-    "performanceExpressTotalAsset": ("ta", floorMapper),
-    "performanceExpressNetAsset": ("na", floorMapper),
-    "performanceExpressEPSChgPct": ("epsgr", rateMapper),
-    "performanceExpressROEWa": ("roew", rateMapper),
-    "performanceExpressEPSDiluted": ("epsd", rateMapper),
-    "performanceExpressGRYOY": ("grgr", rateMapper),
-    "performanceExpressOPYOY": ("opgr", rateMapper)
+    "code": ("id", default),
+    "performanceExpPubDate": ("publishDate", default),
+    "performanceExpStatDate": ("statDate", default),
+    "performanceExpUpdateDate": ("updateDate", default),
+    "performanceExpressTotalAsset": ("ta", toFloored),
+    "performanceExpressNetAsset": ("na", toFloored),
+    "performanceExpressEPSChgPct": ("epsgr", toFloat),
+    "performanceExpressROEWa": ("roew", toFloat),
+    "performanceExpressEPSDiluted": ("epsd", toFloat),
+    "performanceExpressGRYOY": ("grgr", toFloat),
+    "performanceExpressOPYOY": ("opgr", toFloat)
 }
 getPerformanceForcastMap: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "code": ("id", rawMapper),
-    "profitForcastExpPubDate": ("publishDate", rawMapper),
-    "profitForcastExpStatDate": ("statDate", rawMapper),
-    "profitForcastType": ("type", rawMapper),
-    "profitForcastAbstract": ("abstract", rawMapper),
-    "profitForcastChgPctUp": ("npasgrUpperLimit", rateMapper),
-    "profitForcastChgPctDwn": ("npasgrLowerLimit", rateMapper)
+    "code": ("id", default),
+    "profitForcastExpPubDate": ("publishDate", default),
+    "profitForcastExpStatDate": ("statDate", default),
+    "profitForcastType": ("type", default),
+    "profitForcastAbstract": ("abstract", default),
+    "profitForcastChgPctUp": ("npasgrUpperLimit", toFloat),
+    "profitForcastChgPctDwn": ("npasgrLowerLimit", toFloat)
 }
 
 
