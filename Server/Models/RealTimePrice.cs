@@ -27,7 +27,7 @@ namespace Server.Models {
 			Highest = (int)(quote.HighestPrice * 10000m);
 			Lowest = (int)(quote.LowestPrice * 10000m);
 			Volume = quote.TotalVolume;
-			Turnover = (long)quote.TotalTurnover;
+			Turnover = (long)(quote.TotalTurnover * 10000m);
 			Time = quote.TradingTime;
 			PreClosing = (int)(quote.PreClosingPrice * 10000m);
 		}
