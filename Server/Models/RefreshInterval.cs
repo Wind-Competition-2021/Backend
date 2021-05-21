@@ -10,14 +10,14 @@ namespace Server.Models {
 	[DataContract]
 	public class RefreshInterval : IEquatable<RefreshInterval> {
 		/// <summary>
-		///     Realtime stock list refreshment interval, unit: second
+		///     Realtime stock list refreshment interval
 		/// </summary>
 		[JsonConverter(typeof(TimeSpanConverter))]
 		[DataMember(Name = "list")]
 		public TimeSpan? List { get; set; }
 
 		/// <summary>
-		///     Realtime single stock trend refreshment interval, unit: second
+		///     Realtime single stock trend refreshment interval
 		/// </summary>
 		[JsonConverter(typeof(TimeSpanConverter))]
 		[DataMember(Name = "trend")]
@@ -113,6 +113,6 @@ namespace Server.Models {
 		public override void WriteJson(JsonWriter writer, TimeSpan value, JsonSerializer serializer) => writer.WriteValue(value.TotalSeconds);
 
 		/// <inheritdoc />
-		public override TimeSpan ReadJson(JsonReader reader, Type objectType, TimeSpan existingValue, bool hasExistingValue, JsonSerializer serializer) => TimeSpan.FromSeconds(Convert.ToDouble((string)reader.Value));
+		public override TimeSpan ReadJson(JsonReader reader, Type objectType, TimeSpan existingValue, bool hasExistingValue, JsonSerializer serializer) => TimeSpan.FromSeconds(Convert.ToDouble(reader.Value));
 	}
 }
