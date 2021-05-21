@@ -1,6 +1,5 @@
 from io import TextIOWrapper
 from typing import Any, Callable, Literal
-import typing
 from zlib import error as Error
 from pandas.core.frame import DataFrame
 from pathlib import Path
@@ -22,9 +21,9 @@ class HiddenPrints:
 
 
 default: Callable[[str], str] = lambda x: x
-toPrice: Callable[[str], int] = lambda x: int(float(x)*10000)
-toRate: Callable[[str], int] = lambda x: None if x == None or x == "" else int(
-    float(x)*1000000)
+fromPrice: Callable[[str], int] = lambda x: int(float(x) * 10000)
+fromRate: Callable[[str], int] = lambda x: int(float(x) * 1000000)
+fromPercent: Callable[[str], int] = lambda x: int(float(x) * 10000)
 toInt: Callable[[str], int] = lambda x: int(x)
 toFloat: Callable[[
     str], float] = lambda x: None if x == None or x == "" else float(x)
@@ -36,12 +35,12 @@ toRehabilitation: Callable[[
     str], str] = lambda x: "1" if x == "post" else "2" if x == "pre" else "3"
 
 priceMapBase: dict[str, tuple[str, Callable[[str], Any]]] = {
-    "open": ("opening", toPrice),
-    "close": ("closing", toPrice),
-    "high": ("highest", toPrice),
-    "low": ("lowest", toPrice),
+    "open": ("opening", fromPrice),
+    "close": ("closing", fromPrice),
+    "high": ("highest", fromPrice),
+    "low": ("lowest", fromPrice),
     "volume": ("volume", toInt),
-    "amount": ("turnover", toPrice),
+    "amount": ("turnover", fromPrice),
     "adjustflag": ("rehabilitation", toRehabilitation)
 }
 getStockInfoMap: dict[str, tuple[str, Callable[[str], Any]]] = {
@@ -62,18 +61,18 @@ getMinutelyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase 
 }
 getDailyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase | {
     "date": ("date", default),
-    "preclose": ("preClosing", toPrice),
-    "turn": ("turnoverRate", toRate),
-    "peTTM": ("per", toRate),
-    "pbMRQ": ("pbr", toRate),
-    "psTTM": ("psr", toRate),
-    "pcfNcfTTM": ("pcfr", toRate),
+    "preclose": ("preClosing", fromPrice),
+    "turn": ("turnoverRate", fromRate),
+    "peTTM": ("per", fromPercent),
+    "pbMRQ": ("pbr", fromPercent),
+    "psTTM": ("psr", fromPercent),
+    "pcfNcfTTM": ("pcfr", fromPercent),
     "tradestatus": ("stopped", lambda x: x == "0"),
     "isST": ("specialTreatment", lambda x: x == "1")
 }
 getWeeklyPriceMap: dict[str, tuple[str, Callable[[str], Any]]] = priceMapBase | {
     "date": ("date", default),
-    "turn": ("turnoverRate", toRate),
+    "turn": ("turnoverRate", fromRate),
 }
 
 statementMapBase: dict[str, tuple[str, Callable[[str], Any]]] = {

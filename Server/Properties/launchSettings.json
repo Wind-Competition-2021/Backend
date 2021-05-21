@@ -21,7 +21,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": "false",
-      "nativeDebugging": true,
+      "nativeDebugging": false,
       "applicationUrl": "http://localhost:5000"
     }
   }

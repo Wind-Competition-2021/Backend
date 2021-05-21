@@ -10,6 +10,9 @@
 		<PackageId>Server</PackageId>
 	</PropertyGroup>
 	<ItemGroup>
+	  <Compile Remove="Controllers\FinancialStatementApi.cs" />
+	</ItemGroup>
+	<ItemGroup>
 		<Content Remove="Properties\launchSettings.json" />
 	</ItemGroup>
 	<ItemGroup>
