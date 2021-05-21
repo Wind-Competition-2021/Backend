@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Server.Filters;
@@ -57,6 +58,7 @@ namespace Server {
 					opts => {
 						opts.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 						opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
+						opts.SerializerSettings.MissingMemberHandling = MissingMemberHandling.Error;
 					}
 				)
 				.AddXmlSerializerFormatters();
