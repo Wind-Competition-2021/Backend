@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
 using Initiator;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Server.Models;
 
 namespace Server.Managers {
@@ -16,7 +17,7 @@ namespace Server.Managers {
 		/// <summary>
 		///     Default interval is 5 minutes
 		/// </summary>
-		public RealtimeQuotesManager() : this(TimeSpan.FromSeconds(5)) { }
+		public RealtimeQuotesManager() : this(TimeSpan.FromSeconds(3)) { }
 
 		/// <summary>
 		/// </summary>
@@ -46,7 +47,7 @@ namespace Server.Managers {
 		/// <summary>
 		///     Record the last websocket push time of a user on single stock trend chart
 		/// </summary>
-		protected Dictionary<string, DateTime> LastSinglePushTime { get; } = new();
+		protected Dictionary<string, DateTime> LastTrendPushTime { get; } = new();
 
 		/// <summary>
 		///     Record the last websocket push time of a user on stock list
@@ -73,9 +74,11 @@ namespace Server.Managers {
 		/// <param name="ids">Stock list</param>
 		/// <returns></returns>
 		public static async Task<List<Quote>> GetRealTimeQuote(params string[] ids) {
-			//Local mocked server
+			#if MOCK
 			var uri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
-			//var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			#else
+			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			#endif
 			var raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
@@ -115,7 +118,7 @@ namespace Server.Managers {
 				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
 			var lastElapsedFinished = true;
 			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(23.9)) {
+				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15)) {
 					Timer.Stop();
 					Stopped = true;
 				}
@@ -130,7 +133,8 @@ namespace Server.Managers {
 							.ContinueWith(
 								task => {
 									var result = task.Result;
-									playBack.AddRange(result);
+									if (result.Count > 0 && result[0].TradingTime > playBack[^1].TradingTime)
+										playBack.AddRange(result);
 									recent.Clear();
 								}
 							)
@@ -169,6 +173,15 @@ namespace Server.Managers {
 		public void Add(string id, Quote quote) => Quotes[id].Recent.Add(quote);
 
 		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="token"></param>
+		public void RemoveToken(string token) {
+			LastTrendPushTime.Remove(token);
+			LastListPushTime.Remove(token);
+		}
+
+		/// <summary>
 		/// </summary>
 		/// <param name="token"></param>
 		/// <param name="id"></param>
@@ -177,13 +190,13 @@ namespace Server.Managers {
 			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
-			if (!LastSinglePushTime.ContainsKey(token)) {
-				LastSinglePushTime[token] = now;
+			if (!LastTrendPushTime.ContainsKey(token)) {
+				LastTrendPushTime[token] = now;
 				return Quotes[id]
 					.PlayBack.Select(quote => new RealtimePrice(quote, id))
 					.ToList();
 			}
-			var time = LastSinglePushTime[token];
+			var time = LastTrendPushTime[token];
 			var result = Quotes[id]
 				.Recent.Concat(Quotes[id].PlayBack)
 				.Where(quote => quote.TradingTime >= time)
@@ -191,7 +204,7 @@ namespace Server.Managers {
 				.ToList();
 
 			if (result.Count > 0)
-				LastSinglePushTime[token] = now;
+				LastTrendPushTime[token] = now;
 			return result;
 		}
 
@@ -202,45 +215,17 @@ namespace Server.Managers {
 		public List<RealtimePrice> GetList(string token) {
 			if (!Initialized || Stopped)
 				return null;
-			var now = DateTime.Now;
-			if (!LastListPushTime.ContainsKey(token)) {
-				LastListPushTime[token] = now;
-				return Quotes.Select(
-						quotes => {
-							var (id, (playBack, recent)) = quotes;
-							var quote = recent.Count > 0
-								? recent.Last()
-								: playBack.LastOrDefault();
-							return new RealtimePrice(quote, id);
-						}
-					)
-					.ToList();
-			}
-			var time = LastListPushTime[token];
-			var result = Quotes
-				.Where(quotes => quotes.Value.Recent.LastOrDefault()?.TradingTime >= time)
-				.Select(
+			LastListPushTime[token] = DateTime.Now;
+			return Quotes.Select(
 					quotes => {
-						var (id, value) = quotes;
-						var quote = value.Recent.Last();
+						var (id, (playBack, recent)) = quotes;
+						var quote = recent.Count > 0
+							? recent.Last()
+							: playBack.LastOrDefault();
 						return new RealtimePrice(quote, id);
 					}
 				)
 				.ToList();
-			if (result.Count == 0)
-				result = Quotes
-					.Where(quotes => quotes.Value.PlayBack.LastOrDefault()?.TradingTime >= time)
-					.Select(
-						quotes => {
-							var (id, value) = quotes;
-							var quote = value.PlayBack.Last();
-							return new RealtimePrice(quote, id);
-						}
-					)
-					.ToList();
-			if (result.Count > 0)
-				LastListPushTime[token] = now;
-			return result;
 		}
 	}
 }
