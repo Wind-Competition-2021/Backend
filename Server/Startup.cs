@@ -99,10 +99,11 @@ namespace Server {
 
 			//Inject Fetcher
 			var fetcherRoot = new DirectoryInfo(Directory.GetCurrentDirectory());
-			var fetcherPath = Path.Combine(fetcherRoot!.Parent!.FullName, "Fetcher");
+			var venvPath = Path.Combine(fetcherRoot!.Parent!.FullName, "Fetcher", "Venv");
+			var pythonPath = Directory.GetDirectories(venvPath).Select(path => Directory.GetFiles(path, "python*")).Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
 			var processInfo = new ProcessStartInfo {
-				FileName = $"\"{Path.Combine(fetcherPath, @"Venv\Scripts\python")}\"",
-				Arguments = $"\"{Path.Combine(fetcherPath, "Fetcher.py")}\"",
+				FileName = $"\"{pythonPath ?? throw new FileNotFoundException("Python not found in Venv")}\"",
+				Arguments = $"\"{Path.Combine(venvPath, "Fetcher.py")}\"",
 				UseShellExecute = false,
 				RedirectStandardInput = true,
 				RedirectStandardOutput = true,
