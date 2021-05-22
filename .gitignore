@@ -6,12 +6,12 @@
 /*
 !/Initiator
 !/Mock
-Mock/.vscode
+/Mock/.vscode
 !/Server
-wwwroot/
-Temp/
+/Server/Temp
 !/Fetcher
-Venv/
+/Fetcher/Venv/*
+!/Fetcher/Venv/pyvenv.cfg
 !/.gitignore
 !/.gitattributes
 !/Stock Quotes.sln
