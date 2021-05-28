@@ -33,7 +33,7 @@ namespace Server.Models {
 		/// <param name="other">Instance of WeeklyPrice to be compared</param>
 		/// <returns>Boolean</returns>
 		public bool Equals(WeeklyPrice other) {
-			if (ReferenceEquals(null, other))
+			if (other is null)
 				return false;
 			if (ReferenceEquals(this, other))
 				return true;
@@ -82,7 +82,7 @@ namespace Server.Models {
 		/// <param name="obj">Object to be compared</param>
 		/// <returns>Boolean</returns>
 		public override bool Equals(object obj) {
-			if (ReferenceEquals(null, obj))
+			if (obj is null)
 				return false;
 			if (ReferenceEquals(this, obj))
 				return true;
@@ -96,7 +96,7 @@ namespace Server.Models {
 		public override int GetHashCode() {
 			unchecked// Overflow is fine, just wrap
 			{
-				var hashCode = 41;
+				int hashCode = 41;
 				// Suitable nullity checks etc, of course :)
 				if (Date != null)
 					hashCode = hashCode * 59 + Date.GetHashCode();

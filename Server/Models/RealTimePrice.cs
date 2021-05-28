@@ -108,7 +108,7 @@ namespace Server.Models {
 		public override int GetHashCode() {
 			unchecked// Overflow is fine, just wrap
 			{
-				var hashCode = 41;
+				int hashCode = 41;
 				// Suitable nullity checks etc, of course :)
 				if (Time != null)
 					hashCode = hashCode * 59 + Time.GetHashCode();

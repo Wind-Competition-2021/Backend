@@ -77,9 +77,9 @@ namespace Server.Managers {
 			#if MOCK
 			var uri = "http://localhost:8520/?list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			#else
-			var uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
+			string uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			#endif
-			var raw = await GetAsync(uri);
+			string raw = await GetAsync(uri);
 			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
 			var result = new List<Quote>(rows.Count);
 			result.AddRange(
@@ -114,9 +114,9 @@ namespace Server.Managers {
 		/// <param name="ids">Stock list</param>
 		/// <returns></returns>
 		public async Task Initialize(string[] ids) {
-			foreach (var id in ids)
+			foreach (string id in ids)
 				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
-			var lastElapsedFinished = true;
+			bool lastElapsedFinished = true;
 			void Elapsed(object sender, ElapsedEventArgs e) {
 				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15)) {
 					Timer.Stop();
@@ -126,7 +126,7 @@ namespace Server.Managers {
 					return;
 				var tasks = new List<Task>(Quotes.Count);
 				foreach (var stock in Quotes) {
-					var id = stock.Key;
+					string id = stock.Key;
 					var (playBack, recent) = stock.Value;
 					tasks.Add(
 						GetRealTimeQuote(id)
@@ -152,7 +152,7 @@ namespace Server.Managers {
 				.ContinueWith(
 					task => {
 						var result = task.Result;
-						for (var i = 0; i < ids.Length; ++i)
+						for (int i = 0; i < ids.Length; ++i)
 							Quotes[ids[i]].PlayBack.Add(result[i]);
 						Timer.Start();
 						Initialized = true;
@@ -218,7 +218,7 @@ namespace Server.Managers {
 			LastListPushTime[token] = DateTime.Now;
 			return Quotes.Select(
 					quotes => {
-						var (id, (playBack, recent)) = quotes;
+						(string id, var (playBack, recent)) = quotes;
 						var quote = recent.Count > 0
 							? recent.Last()
 							: playBack.LastOrDefault();
