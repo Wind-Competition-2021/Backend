@@ -3,7 +3,7 @@ from typing import Any, Callable, Literal
 from zlib import error as Error
 from pandas.core.frame import DataFrame
 from pathlib import Path
-from datetime import datetime as DateTime, time as Time
+from datetime import datetime as DateTime, time as Time, timedelta as TimeSpan
 from time import ctime
 import baostock as BaoStock
 import sys as System
@@ -280,16 +280,24 @@ def checkTradeStatus(date: str = None):
     return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
 
 
-if __name__ == "__main__":
+def login():
     with HiddenPrints():
         login = BaoStock.login()
     if login.error_code != "0":
         raise Error("Connection failed")
+
+
+if __name__ == "__main__":
+    login()
+    loginTime = DateTime.today()
     log = open(str(Path(__file__).parent.absolute()/"Log" /
                (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
     System.stdin = TextIOWrapper(System.stdin.buffer, encoding='utf8')
     for line in System.stdin:
+        if (DateTime.today() - loginTime).total_seconds() > 3600:
+            login()
+            loginTime = DateTime.today()
         args = line.strip().split()
         operation = args[0]
         args = args[1:]
@@ -326,10 +334,11 @@ if __name__ == "__main__":
                 BaoStock.logout()
             break
         else:
-            validCommand=False
+            validCommand = False
         json = Json.dumps(result, ensure_ascii=False)
         if validCommand:
-            log.write("\n" + DateTime.today().strftime("%Y-%m-%dT%H:%M:%S") + ": " + line + json + "\n")
+            log.write(
+                "\n" + DateTime.today().strftime("%Y-%m-%dT%H:%M:%S") + ": " + line + json + "\n")
         System.stdout.write(json)
         System.stdout.write("\n")
         System.stdout.flush()
