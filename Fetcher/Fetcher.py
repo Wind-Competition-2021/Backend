@@ -4,6 +4,7 @@ from zlib import error as Error
 from pandas.core.frame import DataFrame
 from pathlib import Path
 from datetime import datetime as DateTime, time as Time
+from time import ctime
 import baostock as BaoStock
 import sys as System
 import os as OS
@@ -284,6 +285,8 @@ if __name__ == "__main__":
         login = BaoStock.login()
     if login.error_code != "0":
         raise Error("Connection failed")
+    log = open(str(Path(__file__).parent.absolute()/"Log" /
+               (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
     System.stdin = TextIOWrapper(System.stdin.buffer, encoding='utf8')
     for line in System.stdin:
@@ -291,6 +294,7 @@ if __name__ == "__main__":
         operation = args[0]
         args = args[1:]
         result: str = ""
+        validCommand: bool = True
         if operation == "getStockList":
             result = getStockList(*args)
         elif operation == "getStockInfo":
@@ -321,7 +325,11 @@ if __name__ == "__main__":
             with HiddenPrints():
                 BaoStock.logout()
             break
+        else:
+            validCommand=False
         json = Json.dumps(result, ensure_ascii=False)
+        if validCommand:
+            log.write("\n" + DateTime.today().strftime("%Y-%m-%dT%H:%M:%S") + ": " + line + json + "\n")
         System.stdout.write(json)
         System.stdout.write("\n")
         System.stdout.flush()
