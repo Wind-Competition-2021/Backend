@@ -30,10 +30,12 @@ namespace Server.Controllers {
 		/// <param name="configurationManager"></param>
 		/// <param name="realtimeQuotesManager"></param>
 		/// <param name="initiator"></param>
-		public WebSocketController(ConfigurationManager configurationManager, RealtimeQuotesManager realtimeQuotesManager, StockQuotesInitiator initiator) {
+		/// <param name="settings"></param>
+		public WebSocketController(ConfigurationManager configurationManager, RealtimeQuotesManager realtimeQuotesManager, StockQuotesInitiator initiator, JsonSerializerSettings settings) {
 			ConfigurationManager = configurationManager;
 			RealtimeQuotesManager = realtimeQuotesManager;
 			Initiator = initiator;
+			SerializerSettings = settings;
 			Initiator.Application.MessageReceived += (_, e) => {
 				MsgType type = new();
 				e.Message.Header.GetField(type);
@@ -55,6 +57,11 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		public StockQuotesInitiator Initiator { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public JsonSerializerSettings SerializerSettings { get; init; }
 
 		/// <summary>
 		/// </summary>
@@ -119,7 +126,7 @@ namespace Server.Controllers {
 				AutoReset = false
 			};
 			//Indicate whether the last push has finished
-			var lastElapsedFinished = true;
+			bool lastElapsedFinished = true;
 			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
 				if (RealtimeQuotesManager?.Stopped == true)
 					return;
@@ -138,7 +145,7 @@ namespace Server.Controllers {
 					if (type != WebSocketMessageType.Text)
 						return;
 					try {
-						var ids = JsonConvert.DeserializeObject<string[]>(text);
+						string[] ids = JsonConvert.DeserializeObject<string[]>(text, SerializerSettings);
 						await RealtimeQuotesManager.Initialize(ids);
 					}
 					catch (Exception) {
@@ -172,9 +179,9 @@ namespace Server.Controllers {
 		/// <param name="bufferSize"></param>
 		/// <returns></returns>
 		public static async Task<(WebSocketReceiveResult WebSocketResult, byte[] Body)> ReceiveAsync(this WebSocket webSocket, CancellationToken cancellationToken, int bufferSize = 1024) {
-			var buffer = new byte[bufferSize];
-			var offset = 0;
-			var free = buffer.Length;
+			byte[] buffer = new byte[bufferSize];
+			int offset = 0;
+			int free = buffer.Length;
 			WebSocketReceiveResult finalResult;
 			while (true) {
 				var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, free), cancellationToken);
@@ -186,8 +193,8 @@ namespace Server.Controllers {
 				}
 				if (free > 0)
 					continue;
-				var newSize = buffer.Length + bufferSize;
-				var newBuffer = new byte[newSize];
+				int newSize = buffer.Length + bufferSize;
+				byte[] newBuffer = new byte[newSize];
 				Array.Copy(buffer, 0, newBuffer, 0, offset);
 				buffer = newBuffer;
 				free = buffer.Length - offset;
@@ -200,14 +207,15 @@ namespace Server.Controllers {
 		/// </summary>
 		/// <typeparam name="T">Type to deserialize to</typeparam>
 		/// <param name="webSocket"></param>
+		/// <param name="settings"></param>
 		/// <param name="cancellationToken"></param>
 		/// <param name="encoding"></param>
 		/// <returns></returns>
-		public static async Task<(WebSocketReceiveResult WebSocketResult, T body)> ReceiveAsync<T>(this WebSocket webSocket, Encoding encoding = null, CancellationToken? cancellationToken = null) {
+		public static async Task<(WebSocketReceiveResult WebSocketResult, T body)> ReceiveAsync<T>(this WebSocket webSocket, Encoding encoding = null, JsonSerializerSettings settings = null, CancellationToken? cancellationToken = null) {
 			cancellationToken ??= CancellationToken.None;
 			encoding ??= Encoding.UTF8;
-			var (result, body) = await webSocket.ReceiveAsync(cancellationToken!.Value);
-			return (result, JsonConvert.DeserializeObject<T>(encoding.GetString(body)));
+			(var result, byte[] body) = await webSocket.ReceiveAsync(cancellationToken!.Value);
+			return (result, JsonConvert.DeserializeObject<T>(encoding.GetString(body), settings));
 		}
 
 		/// <summary>
@@ -234,7 +242,7 @@ namespace Server.Controllers {
 		/// <param name="onReceived"></param>
 		/// <returns></returns>
 		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Action<string, WebSocketMessageType> onReceived = null) {
-			var (result, buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
+			(var result, byte[] buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
 			onReceived?.Invoke(Encoding.UTF8.GetString(buffer), result.MessageType);
 			if (!result.CloseStatus.HasValue)
 				result = await webSocket.Listen(onReceived);
@@ -247,7 +255,7 @@ namespace Server.Controllers {
 		/// <param name="onReceived"></param>
 		/// <returns></returns>
 		public static async Task<WebSocketReceiveResult> Listen(this WebSocket webSocket, Func<string, WebSocketMessageType, Task> onReceived = null) {
-			var (result, buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
+			(var result, byte[] buffer) = await webSocket.ReceiveAsync(CancellationToken.None);
 			if (onReceived != null)
 				await onReceived(Encoding.UTF8.GetString(buffer), result.MessageType);
 			if (!result.CloseStatus.HasValue)

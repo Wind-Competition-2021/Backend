@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Server.Attributes;
@@ -25,11 +26,20 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="fetcher"></param>
-		public QuoteApiController(Process fetcher) => Fetcher = fetcher;
+		/// <param name="settings"></param>
+		public QuoteApiController(Process fetcher, JsonSerializerSettings settings) {
+			Fetcher = fetcher;
+			SerializerSettings = settings;
+		}
 
 		/// <summary>
 		/// </summary>
 		public Process Fetcher { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public JsonSerializerSettings SerializerSettings { get; init; }
 
 		/// <summary>
 		/// </summary>
@@ -41,12 +51,12 @@ namespace Server.Controllers {
 		[SwaggerResponse(200, type: typeof(bool), description: "Trading status checked successfully")]
 		public virtual IActionResult CheckTradeStatus([FromQuery] DateTime? date) {
 			lock (Fetcher) {
-				var command = "checkTradeStatus";
+				string command = "checkTradeStatus";
 				if (date.HasValue)
 					command += $" {date:yyyy-MM-dd}";
 				Fetcher.StandardInput.WriteLine(command);
-				var raw = Fetcher.StandardOutput.ReadLine();
-				return Ok(JsonConvert.DeserializeObject<bool>(raw));
+				string raw = Fetcher.StandardOutput.ReadLine();
+				return Ok(JsonConvert.DeserializeObject<bool>(raw, SerializerSettings));
 			}
 		}
 
@@ -75,8 +85,8 @@ namespace Server.Controllers {
 			end ??= DateTime.Now;
 			lock (Fetcher) {
 				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {begin ?? end - TimeSpan.FromDays(30):yyyy-MM-dd} {end:yyyy-MM-dd} {rehabilitation ?? "none"}");
-				var raw = Fetcher.StandardOutput.ReadLine();
-				result = JsonConvert.DeserializeObject<DailyPrice[]>(raw);
+				string raw = Fetcher.StandardOutput.ReadLine();
+				result = JsonConvert.DeserializeObject<DailyPrice[]>(raw, SerializerSettings);
 			}
 			return Ok(result);
 		}
@@ -108,8 +118,8 @@ namespace Server.Controllers {
 			var now = DateTime.Now;
 			lock (Fetcher) {
 				Fetcher.StandardInput.WriteLine($"getDailyPrice {id} {begin ?? now - TimeSpan.FromDays(7):yyyy-MM-dd} {end ?? now:yyyy-MM-dd} {frequency ?? 60} {rehabilitation ?? "none"}");
-				var raw = Fetcher.StandardOutput.ReadLine();
-				result = JsonConvert.DeserializeObject<MinutelyPrice[]>(raw);
+				string raw = Fetcher.StandardOutput.ReadLine();
+				result = JsonConvert.DeserializeObject<MinutelyPrice[]>(raw, SerializerSettings);
 			}
 			return Ok(result);
 		}
@@ -141,8 +151,8 @@ namespace Server.Controllers {
 			var now = DateTime.Now;
 			lock (Fetcher) {
 				Fetcher.StandardInput.WriteLine($"getWeeklyPrice {id} {begin ?? now - TimeSpan.FromDays(60):yyyy-MM-dd} {end ?? now:yyyy-MM-dd} {frequency ?? "week"} {rehabilitation ?? "none"}");
-				var raw = Fetcher.StandardOutput.ReadLine();
-				result = JsonConvert.DeserializeObject<WeeklyPrice[]>(raw);
+				string raw = Fetcher.StandardOutput.ReadLine();
+				result = JsonConvert.DeserializeObject<WeeklyPrice[]>(raw, SerializerSettings);
 			}
 			return Ok(result);
 		}

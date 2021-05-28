@@ -9,6 +9,7 @@
  */
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Server.Attributes;
 using Server.Managers;
 using Swashbuckle.AspNetCore.Annotations;
@@ -21,11 +22,20 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="manager"></param>
-		public TokenApiController(ConfigurationManager manager) => ConfigurationManager = manager;
+		/// <param name="settings"></param>
+		public TokenApiController(ConfigurationManager manager, JsonSerializerSettings settings) {
+			ConfigurationManager = manager;
+			SerializerSettings = settings;
+		}
 
 		/// <summary>
 		/// </summary>
 		public ConfigurationManager ConfigurationManager { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public JsonSerializerSettings SerializerSettings { get; init; }
 
 		/// <summary>
 		/// </summary>
@@ -37,7 +47,7 @@ namespace Server.Controllers {
 		[SwaggerOperation("GetToken")]
 		[SwaggerResponse(201, type: typeof(string), description: "The new token has been created and returned")]
 		public virtual IActionResult GetToken() {
-			var newToken = ConfigurationManager.GetNewToken();
+			string newToken = ConfigurationManager.GetNewToken();
 			ConfigurationManager.Add(newToken);
 			return StatusCode(201, newToken);
 		}

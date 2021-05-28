@@ -25,11 +25,20 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="fetcher"></param>
-		public StockApiController(Process fetcher) => Fetcher = fetcher;
+		/// <param name="settings"></param>
+		public StockApiController(Process fetcher, JsonSerializerSettings settings) {
+			Fetcher = fetcher;
+			SerializerSettings = settings;
+		}
 
 		/// <summary>
 		/// </summary>
 		public Process Fetcher { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public JsonSerializerSettings SerializerSettings { get; init; }
 
 		/// <summary>
 		/// </summary>
@@ -47,10 +56,10 @@ namespace Server.Controllers {
 		) {
 			StockInfo result;
 			lock (Fetcher) {
-				var parts = id.Split('.');
+				string[] parts = id.Split('.');
 				Fetcher.StandardInput.WriteLine($"getStockInfo {parts[1]}.{parts[0]}");
-				var raw = Fetcher.StandardOutput.ReadLine();
-				result = JsonConvert.DeserializeObject<StockInfo>(raw);
+				string raw = Fetcher.StandardOutput.ReadLine();
+				result = JsonConvert.DeserializeObject<StockInfo>(raw, SerializerSettings);
 			}
 			return Ok(result);
 		}
@@ -70,8 +79,8 @@ namespace Server.Controllers {
 			StockBasicInfo[] result;
 			lock (Fetcher) {
 				Fetcher.StandardInput.WriteLine($"getStockList {type ?? "default"} {date ?? DateTime.Now:yyyy-MM-dd}");
-				var raw = Fetcher.StandardOutput.ReadLine();
-				result = JsonConvert.DeserializeObject<StockBasicInfo[]>(raw);
+				string raw = Fetcher.StandardOutput.ReadLine();
+				result = JsonConvert.DeserializeObject<StockBasicInfo[]>(raw, SerializerSettings);
 			}
 			return Ok(result);
 		}

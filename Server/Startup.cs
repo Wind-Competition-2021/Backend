@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Colorful;
 using Initiator;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
@@ -98,12 +99,12 @@ namespace Server {
 			services.AddSingleton(new ConfigurationManager());
 
 			//Inject Fetcher
-			var fetcherRoot = new DirectoryInfo(Directory.GetCurrentDirectory());
-			var venvPath = Path.Combine(fetcherRoot!.Parent!.FullName, "Fetcher", "Venv");
-			var pythonPath = Directory.GetDirectories(venvPath).Select(path => Directory.GetFiles(path, "python*")).Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
+			string fetcherRoot = Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent!.FullName, "Fetcher");
+			string venvPath = Path.Combine(fetcherRoot, "Venv");
+			string pythonPath = Directory.GetDirectories(venvPath).Select(path => Directory.GetFiles(path, "python*")).Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
 			var processInfo = new ProcessStartInfo {
 				FileName = $"\"{pythonPath ?? throw new FileNotFoundException("Python not found in Venv")}\"",
-				Arguments = $"\"{Path.Combine(venvPath, "Fetcher.py")}\"",
+				Arguments = $"\"{Path.Combine(fetcherRoot, "Fetcher.py")}\"",
 				UseShellExecute = false,
 				RedirectStandardInput = true,
 				RedirectStandardOutput = true,
@@ -118,6 +119,17 @@ namespace Server {
 				process = Process.Start(processInfo);
 			};
 			services.AddSingleton(process);
+
+			//Inject custom serializer settings
+			services.AddSingleton(
+				new JsonSerializerSettings() {
+					Error = (_, args) => {
+						Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
+						process.Kill();
+						process.Start();
+					}
+				}
+			);
 
 			//Inject RealtimeQuotesManager
 			var realtimeQuotesManager = new RealtimeQuotesManager();
@@ -148,9 +160,13 @@ namespace Server {
 			app.UseRouting();
 			app.Use(
 				async (context, next) => {
-					Console.Write(context.Request.Method, Color.Cyan);
-					Console.WriteLine($" {context.Request.GetDisplayUrl()}", Color.MediumSpringGreen);
-					Console.ResetColor();
+					Console.WriteLineFormatted(
+						"{0} {1} {2}",
+						Color.Azure,
+						new Formatter(DateTime.Now.ToString(), Color.HotPink),
+						new Formatter(context.Request.Method, Color.Cyan),
+						new Formatter(context.Request.GetDisplayUrl(), Color.MediumSpringGreen)
+					);
 					await next();
 				}
 			);
