@@ -8,6 +8,7 @@
 		<LangVersion>latest</LangVersion>
 		<AssemblyName>Server</AssemblyName>
 		<PackageId>Server</PackageId>
+		<UserSecretsId>3a16382b-0d64-475b-a30e-578e815adf01</UserSecretsId>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="Controllers\FinancialStatementApi.cs" />
@@ -26,6 +27,12 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.1.4" />
+		<PackageReference Include="System.Collections" Version="4.3.0" />
+		<PackageReference Include="System.Diagnostics.Debug" Version="4.3.0" />
+		<PackageReference Include="System.Globalization" Version="4.3.0" />
+		<PackageReference Include="System.Runtime.Extensions" Version="4.3.1" />
+		<PackageReference Include="System.Runtime.Handles" Version="4.3.0" />
+		<PackageReference Include="System.Runtime.InteropServices" Version="4.3.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.4" />

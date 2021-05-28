@@ -9,6 +9,7 @@
 /Mock/.vscode
 !/Server
 /Server/Temp
+/Server/.config
 !/Fetcher
 /Fetcher/Venv/*
 !/Fetcher/Venv/pyvenv.cfg
