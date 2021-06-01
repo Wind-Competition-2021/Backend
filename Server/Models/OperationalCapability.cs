@@ -16,42 +16,42 @@ namespace Server.Models {
 		/// </summary>
 		/// <value>Receivable Turnover Ratio</value>
 		[DataMember(Name = "rtr")]
-		public string Rtr { get; set; }
+		public decimal? Rtr { get; set; }
 
 		/// <summary>
 		///     Receivable Turnover Days
 		/// </summary>
 		/// <value>Receivable Turnover Days</value>
 		[DataMember(Name = "rtd")]
-		public string Rtd { get; set; }
+		public decimal? Rtd { get; set; }
 
 		/// <summary>
 		///     Inventory Turnover Ratio
 		/// </summary>
 		/// <value>Inventory Turnover Ratio</value>
 		[DataMember(Name = "itr")]
-		public string Itr { get; set; }
+		public decimal? Itr { get; set; }
 
 		/// <summary>
-		///     Inventory Aurnover Days
+		///     Inventory Turnover Days
 		/// </summary>
-		/// <value>Inventory Aurnover Days</value>
+		/// <value>Inventory Turnover Days</value>
 		[DataMember(Name = "itd")]
-		public string Itd { get; set; }
+		public decimal? Itd { get; set; }
 
 		/// <summary>
 		///     Current Asset Turnover Ratio
 		/// </summary>
 		/// <value>Current Asset Turnover Ratio</value>
 		[DataMember(Name = "catr")]
-		public string Catr { get; set; }
+		public decimal? Catr { get; set; }
 
 		/// <summary>
 		///     Total Asset Turnover Ratio
 		/// </summary>
 		/// <value>Total Asset Turnover Ratio</value>
 		[DataMember(Name = "tatr")]
-		public string Tatr { get; set; }
+		public decimal? Tatr { get; set; }
 
 		/// <summary>
 		///     Returns the string presentation of the object

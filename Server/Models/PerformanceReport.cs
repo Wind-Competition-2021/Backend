@@ -30,49 +30,49 @@ namespace Server.Models {
 		/// </summary>
 		/// <value>Total Assets</value>
 		[DataMember(Name = "ta")]
-		public string Ta { get; set; }
+		public decimal? Ta { get; set; }
 
 		/// <summary>
 		/// Net Assets
 		/// </summary>
 		/// <value>Net Assets</value>
 		[DataMember(Name = "na")]
-		public string Na { get; set; }
+		public decimal? Na { get; set; }
 
 		/// <summary>
 		/// Earnings Per Stock Growth Rate
 		/// </summary>
 		/// <value>Earnings Per Stock Growth Rate</value>
 		[DataMember(Name = "epsgr")]
-		public string Epsgr { get; set; }
+		public decimal? Epsgr { get; set; }
 
 		/// <summary>
 		/// Rate Of Equity Weighted
 		/// </summary>
 		/// <value>Rate Of Equity Weighted</value>
 		[DataMember(Name = "roew")]
-		public string Roew { get; set; }
+		public decimal? Roew { get; set; }
 
 		/// <summary>
 		/// Earnings Per Stock Diluted
 		/// </summary>
 		/// <value>Earnings Per Stock Diluted</value>
 		[DataMember(Name = "epsd")]
-		public string Epsd { get; set; }
+		public decimal? Epsd { get; set; }
 
 		/// <summary>
 		/// Growth Revenue Growth Rate
 		/// </summary>
 		/// <value>Growth Revenue Growth Rate</value>
 		[DataMember(Name = "grgr")]
-		public string Grgr { get; set; }
+		public decimal? Grgr { get; set; }
 
 		/// <summary>
 		/// Operating Profit Growth Rate
 		/// </summary>
 		/// <value>Operating Profit Growth Rate</value>
 		[DataMember(Name = "opgr")]
-		public string Opgr { get; set; }
+		public decimal? Opgr { get; set; }
 
 		/// <summary>
 		/// Returns the string presentation of the object

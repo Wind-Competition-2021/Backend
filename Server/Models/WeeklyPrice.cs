@@ -25,7 +25,7 @@ namespace Server.Models {
 		///     Gets or Sets TurnoverRate
 		/// </summary>
 		[DataMember(Name = "turnoverRate")]
-		public int? TurnoverRate { get; set; }
+		public decimal? TurnoverRate { get; set; }
 
 		/// <summary>
 		///     Returns true if WeeklyPrice instances are equal

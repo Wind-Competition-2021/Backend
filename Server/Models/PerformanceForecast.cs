@@ -28,13 +28,13 @@ namespace Server.Models {
 		///     Gets or Sets NpasgrUpperLimit
 		/// </summary>
 		[DataMember(Name = "npasgrUpperLimit")]
-		public string NpasgrUpperLimit { get; set; }
+		public decimal? NpasgrUpperLimit { get; set; }
 
 		/// <summary>
 		///     Gets or Sets NpasgrLowerLimit
 		/// </summary>
 		[DataMember(Name = "npasgrLowerLimit")]
-		public string NpasgrLowerLimit { get; set; }
+		public decimal? NpasgrLowerLimit { get; set; }
 
 		/// <summary>
 		///     Returns the string presentation of the object

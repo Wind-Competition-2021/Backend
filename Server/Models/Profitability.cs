@@ -3,118 +3,73 @@
 // ReSharper disable CommentTypo
 
 using System;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Server.Models {
 	/// <summary>
-	/// 
 	/// </summary>
 	[DataContract]
 	public class Profitability : StatementBase, IEquatable<Profitability> {
 		/// <summary>
-		/// Return On Equity
+		///     Return On Equity
 		/// </summary>
 		/// <value>Return On Equity</value>
 		[DataMember(Name = "roe")]
-		public string Roe { get; set; }
+		public decimal? Roe { get; set; }
 
 		/// <summary>
-		/// Net Profit Margin
+		///     Net Profit Margin
 		/// </summary>
 		/// <value>Net Profit Margin</value>
 		[DataMember(Name = "npm")]
-		public string Npm { get; set; }
+		public decimal? Npm { get; set; }
 
 		/// <summary>
-		/// Gross Profit Margin
+		///     Gross Profit Margin
 		/// </summary>
 		/// <value>Gross Profit Margin</value>
 		[DataMember(Name = "gpm")]
-		public string Gpm { get; set; }
+		public decimal? Gpm { get; set; }
 
 		/// <summary>
-		/// Net Profit
+		///     Net Profit
 		/// </summary>
 		/// <value>Net Profit</value>
 		[DataMember(Name = "np")]
 		public long? Np { get; set; }
 
 		/// <summary>
-		/// Earnings Per Share
+		///     Earnings Per Share
 		/// </summary>
 		/// <value>Earnings Per Share</value>
 		[DataMember(Name = "eps")]
-		public string Eps { get; set; }
+		public decimal? Eps { get; set; }
 
 		/// <summary>
-		/// Main Business Revenue
+		///     Main Business Revenue
 		/// </summary>
 		/// <value>Main Business Revenue</value>
 		[DataMember(Name = "mbr")]
 		public long? Mbr { get; set; }
 
 		/// <summary>
-		/// Totala Shares
+		///     Totala Shares
 		/// </summary>
 		/// <value>Totala Shares</value>
 		[DataMember(Name = "ts")]
 		public long? Ts { get; set; }
 
 		/// <summary>
-		/// Circulating Shares
+		///     Circulating Shares
 		/// </summary>
 		/// <value>Circulating Shares</value>
 		[DataMember(Name = "cs")]
 		public long? Cs { get; set; }
 
 		/// <summary>
-		/// Returns the string presentation of the object
-		/// </summary>
-		/// <returns>String presentation of the object</returns>
-		public override string ToString() {
-			var sb = new StringBuilder();
-			sb.Append("class Profitability {\n");
-			sb.Append("  Roe: ").Append(Roe).Append('\n');
-			sb.Append("  Npm: ").Append(Npm).Append('\n');
-			sb.Append("  Gpm: ").Append(Gpm).Append('\n');
-			sb.Append("  Np: ").Append(Np).Append('\n');
-			sb.Append("  Eps: ").Append(Eps).Append('\n');
-			sb.Append("  Mbr: ").Append(Mbr).Append('\n');
-			sb.Append("  Ts: ").Append(Ts).Append('\n');
-			sb.Append("  Cs: ").Append(Cs).Append('\n');
-			sb.Append("}\n");
-			return sb.ToString();
-		}
-
-		/// <summary>
-		/// Returns the JSON string presentation of the object
-		/// </summary>
-		/// <returns>JSON string presentation of the object</returns>
-		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
-
-		/// <summary>
-		/// Returns true if objects are equal
-		/// </summary>
-		/// <param name="obj">Object to be compared</param>
-		/// <returns>Boolean</returns>
-		public override bool Equals(object obj) {
-			if (obj is null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			return obj.GetType() == GetType() && Equals((Profitability)obj);
-		}
-
-		/// <summary>
-		/// Returns true if Profitability instances are equal
+		///     Returns true if Profitability instances are equal
 		/// </summary>
 		/// <param name="other">Instance of Profitability to be compared</param>
 		/// <returns>Boolean</returns>
@@ -168,7 +123,45 @@ namespace Server.Models {
 		}
 
 		/// <summary>
-		/// Gets the hash code
+		///     Returns the string presentation of the object
+		/// </summary>
+		/// <returns>String presentation of the object</returns>
+		public override string ToString() {
+			var sb = new StringBuilder();
+			sb.Append("class Profitability {\n");
+			sb.Append("  Roe: ").Append(Roe).Append('\n');
+			sb.Append("  Npm: ").Append(Npm).Append('\n');
+			sb.Append("  Gpm: ").Append(Gpm).Append('\n');
+			sb.Append("  Np: ").Append(Np).Append('\n');
+			sb.Append("  Eps: ").Append(Eps).Append('\n');
+			sb.Append("  Mbr: ").Append(Mbr).Append('\n');
+			sb.Append("  Ts: ").Append(Ts).Append('\n');
+			sb.Append("  Cs: ").Append(Cs).Append('\n');
+			sb.Append("}\n");
+			return sb.ToString();
+		}
+
+		/// <summary>
+		///     Returns the JSON string presentation of the object
+		/// </summary>
+		/// <returns>JSON string presentation of the object</returns>
+		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
+
+		/// <summary>
+		///     Returns true if objects are equal
+		/// </summary>
+		/// <param name="obj">Object to be compared</param>
+		/// <returns>Boolean</returns>
+		public override bool Equals(object obj) {
+			if (obj is null)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			return obj.GetType() == GetType() && Equals((Profitability)obj);
+		}
+
+		/// <summary>
+		///     Gets the hash code
 		/// </summary>
 		/// <returns>Hash code</returns>
 		public override int GetHashCode() {

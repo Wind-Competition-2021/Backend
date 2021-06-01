@@ -24,42 +24,42 @@ namespace Server.Models {
 		/// </summary>
 		/// <value>Current Ratio</value>
 		[DataMember(Name = "cr")]
-		public string Cr { get; set; }
+		public decimal? Cr { get; set; }
 
 		/// <summary>
 		/// Quick Ratio
 		/// </summary>
 		/// <value>Quick Ratio</value>
 		[DataMember(Name = "qr")]
-		public string Qr { get; set; }
+		public decimal? Qr { get; set; }
 
 		/// <summary>
 		/// Cash Asset Ratio
 		/// </summary>
 		/// <value>Cash Asset Ratio</value>
 		[DataMember(Name = "car")]
-		public string Car { get; set; }
+		public decimal? Car { get; set; }
 
 		/// <summary>
 		/// Total Liabilities Growth Rate
 		/// </summary>
 		/// <value>Total Liabilities Growth Rate</value>
 		[DataMember(Name = "tlgr")]
-		public string Tlgr { get; set; }
+		public decimal? Tlgr { get; set; }
 
 		/// <summary>
 		/// Debt Asset Ratio
 		/// </summary>
 		/// <value>Debt Asset Ratio</value>
 		[DataMember(Name = "dar")]
-		public string Dar { get; set; }
+		public decimal? Dar { get; set; }
 
 		/// <summary>
 		/// Equity Multiplier
 		/// </summary>
 		/// <value>Equity Multiplier</value>
 		[DataMember(Name = "em")]
-		public string Em { get; set; }
+		public decimal? Em { get; set; }
 
 		/// <summary>
 		/// Returns the string presentation of the object

@@ -16,35 +16,35 @@ namespace Server.Models {
 		/// </summary>
 		/// <value>Net Asset Growth Rate</value>
 		[DataMember(Name = "nagr")]
-		public string Nagr { get; set; }
+		public decimal? Nagr { get; set; }
 
 		/// <summary>
 		///     Total Asset Growth Rate
 		/// </summary>
 		/// <value>Total Asset Growth Rate</value>
 		[DataMember(Name = "tagr")]
-		public string Tagr { get; set; }
+		public decimal? Tagr { get; set; }
 
 		/// <summary>
 		///     Net Profit Growth Rate
 		/// </summary>
 		/// <value>Net Profit Growth Rate</value>
 		[DataMember(Name = "npgr")]
-		public string Npgr { get; set; }
+		public decimal? Npgr { get; set; }
 
 		/// <summary>
 		///     Basic Earnings Per Stock Growth Rate
 		/// </summary>
 		/// <value>Basic Earnings Per Stock Growth Rate</value>
 		[DataMember(Name = "bepsgr")]
-		public string Bepsgr { get; set; }
+		public decimal? Bepsgr { get; set; }
 
 		/// <summary>
 		///     Net Profit Attributable to Shareholders Growth Rate
 		/// </summary>
 		/// <value>Net Profit Attributable to Shareholders Growth Rate</value>
 		[DataMember(Name = "npasgr")]
-		public string Npasgr { get; set; }
+		public decimal? Npasgr { get; set; }
 
 		/// <summary>
 		///     Returns the string presentation of the object

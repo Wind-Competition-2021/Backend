@@ -33,35 +33,31 @@ namespace Server.Models {
 		///     Gets or Sets TurnoverRate
 		/// </summary>
 		[DataMember(Name = "turnoverRate")]
-		public int? TurnoverRate { get; set; }
+		public decimal? TurnoverRate { get; set; }
 
 		/// <summary>
-		///     price/earnings ratio
+		///     Price/Earnings Ratio
 		/// </summary>
-		/// <value>price/earnings ratio</value>
 		[DataMember(Name = "per")]
-		public int? Per { get; set; }
+		public decimal? Per { get; set; }
 
 		/// <summary>
-		///     price to sales ratio
+		///     Price to Sales Ratio
 		/// </summary>
-		/// <value>price to sales ratio</value>
 		[DataMember(Name = "psr")]
-		public int? Psr { get; set; }
+		public decimal? Psr { get; set; }
 
 		/// <summary>
-		///     price cash flow ratio
+		///     Price Cash Flow Ratio
 		/// </summary>
-		/// <value>price cash flow ratio</value>
 		[DataMember(Name = "pcfr")]
-		public int? Pcfr { get; set; }
+		public decimal? Pcfr { get; set; }
 
 		/// <summary>
-		///     price to book ratio
+		///     Price to Book Ratio
 		/// </summary>
-		/// <value>price to book ratio</value>
 		[DataMember(Name = "pbr")]
-		public int? Pbr { get; set; }
+		public decimal? Pbr { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Stopped

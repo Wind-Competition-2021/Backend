@@ -16,49 +16,49 @@ namespace Server.Models {
 		/// </summary>
 		/// <value>Current Assets to Total Assets Ratio</value>
 		[DataMember(Name = "catar")]
-		public string Catar { get; set; }
+		public decimal? Catar { get; set; }
 
 		/// <summary>
 		///     Fixed Assets to Total Assets Ratio
 		/// </summary>
 		/// <value>Fixed Assets to Total Assets Ratio</value>
 		[DataMember(Name = "fatar")]
-		public string Fatar { get; set; }
+		public decimal? Fatar { get; set; }
 
 		/// <summary>
 		///     Tangible Assets to Total Assets Ratio
 		/// </summary>
 		/// <value>Tangible Assets to Total Assets Ratio</value>
 		[DataMember(Name = "tatar")]
-		public string Tatar { get; set; }
+		public decimal? Tatar { get; set; }
 
 		/// <summary>
 		///     Interest Protection Multiples
 		/// </summary>
 		/// <value>Interest Protection Multiples</value>
 		[DataMember(Name = "ipm")]
-		public string Ipm { get; set; }
+		public decimal? Ipm { get; set; }
 
 		/// <summary>
 		///     Operating Net Cash Flow to Operating Revenue Ratio
 		/// </summary>
 		/// <value>Operating Net Cash Flow to Operating Revenue Ratio</value>
 		[DataMember(Name = "oncforr")]
-		public string Oncforr { get; set; }
+		public decimal? Oncforr { get; set; }
 
 		/// <summary>
 		///     Operating Net Cash Flow to Net Profit Ratio
 		/// </summary>
 		/// <value>Operating Net Cash Flow to Net Profit Ratio</value>
 		[DataMember(Name = "oncfnpr")]
-		public string Oncfnpr { get; set; }
+		public decimal? Oncfnpr { get; set; }
 
 		/// <summary>
 		///     Operating Net Cash Flow to Gross Revenue Ratio
 		/// </summary>
 		/// <value>Operating Net Cash Flow to Gross Revenue Ratio</value>
 		[DataMember(Name = "oncfgrr")]
-		public string Oncfgrr { get; set; }
+		public decimal? Oncfgrr { get; set; }
 
 		/// <summary>
 		///     Returns the string presentation of the object
