@@ -11,9 +11,6 @@
 		<UserSecretsId>3a16382b-0d64-475b-a30e-578e815adf01</UserSecretsId>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Compile Remove="Controllers\FinancialStatementApi.cs" />
-	</ItemGroup>
-	<ItemGroup>
 		<Content Remove="Properties\launchSettings.json" />
 	</ItemGroup>
 	<ItemGroup>
@@ -46,5 +43,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Initiator\Initiator.csproj" />
+		<ProjectReference Include="..\Tushare\Tushare.csproj" />
 	</ItemGroup>
 </Project>

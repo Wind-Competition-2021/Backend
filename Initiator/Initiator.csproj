@@ -11,6 +11,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Colorful.Console" Version="1.2.15" />
     <PackageReference Include="QuickFix.Net.NETCore" Version="1.8.1" />
     <PackageReference Include="QuickFix.Net.NETCore.FIX44" Version="1.8.1" />

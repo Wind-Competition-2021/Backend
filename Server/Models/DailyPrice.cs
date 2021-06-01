@@ -1,3 +1,6 @@
+// ReSharper disable IdentifierTypo
+// ReSharper disable StringLiteralTypo
+
 using System;
 using System.Runtime.Serialization;
 using System.Text;

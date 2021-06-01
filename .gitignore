@@ -13,9 +13,12 @@
 !/Fetcher
 /Fetcher/Venv/*
 !/Fetcher/Venv/pyvenv.cfg
+!/Tushare
+!/*.Test/
 !/.gitignore
 !/.gitattributes
 !/Stock Quotes.sln
+!/favicon.*
 
 *[Ee]xample*/
 
