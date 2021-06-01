@@ -14,8 +14,9 @@ namespace Server.Models {
 		///     Stock id
 		/// </summary>
 		[Required]
+		[JsonConverter(typeof(StockIdConverter))]
 		[DataMember(Name = "id")]
-		public string Id { get; set; }
+		public StockId Id { get; set; }
 
 		/// <summary>
 		///     Stock name

@@ -16,7 +16,7 @@ namespace Server.Managers {
 		/// </summary>
 		public static Configuration DefaultConfiguration
 			=> new() {
-				PinnedStocks = new List<string>(),
+				PinnedStocks = new List<StockId>(),
 				RefreshInterval = new RefreshInterval {
 					List = TimeSpan.FromSeconds(5),
 					Trend = TimeSpan.FromMinutes(1)
@@ -30,7 +30,7 @@ namespace Server.Managers {
 			get {
 				StringBuilder builder = new();
 				builder.Clear();
-				for (var i = 0; i < 16; ++i)
+				for (int i = 0; i < 16; ++i)
 					builder.Append(CharSet[Random.Next() % CharSet.Length]);
 				return builder.ToString();
 			}
@@ -70,7 +70,7 @@ namespace Server.Managers {
 		/// </summary>
 		/// <returns></returns>
 		public string GetNewToken() {
-			var token = RandomToken;
+			string token = RandomToken;
 			while (Contains(token))
 				token = RandomToken;
 			return token;

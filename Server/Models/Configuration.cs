@@ -14,8 +14,9 @@ namespace Server.Models {
 		/// <summary>
 		///     The list of stocks pinned by user
 		/// </summary>
+		[JsonProperty(ItemConverterType = typeof(StockIdConverter))]
 		[DataMember(Name = "pinnedStocks")]
-		public List<string> PinnedStocks { get; set; }
+		public List<StockId> PinnedStocks { get; set; }
 
 		/// <summary>
 		///     List and trend refresh interval
