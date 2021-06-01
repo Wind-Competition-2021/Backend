@@ -6,28 +6,85 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Timers;
 using Initiator;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Server.Models;
+using Tushare;
+using Timer = Server.Utilities.Timer;
 
 namespace Server.Managers {
 	/// <summary>
 	///     Manager of real time stock quotes
 	/// </summary>
 	public class RealtimeQuotesManager {
+		private bool _isTradeDay = true;
+		private bool _lastElapsedFinished = true;
+
 		/// <summary>
-		///     Default interval is 5 minutes
+		///     Default interval is 1 minutes
 		/// </summary>
-		public RealtimeQuotesManager() : this(TimeSpan.FromSeconds(3)) { }
+		public RealtimeQuotesManager(TushareManager tushare) : this(TimeSpan.FromMinutes(1), tushare) { }
 
 		/// <summary>
 		/// </summary>
 		/// <param name="interval">Interval to sync with public quote server</param>
-		public RealtimeQuotesManager(TimeSpan interval) => Timer = new Timer(interval.TotalMilliseconds);
+		/// <param name="tushare"></param>
+		public RealtimeQuotesManager(TimeSpan interval, TushareManager tushare) {
+			Tushare = tushare;
+			void Elapsed(object sender, ElapsedEventArgs e) {
+				if (TradeOff) {
+					Synchronizer.Stop();
+					Stopped = true;
+				}
+				if (!_lastElapsedFinished)
+					return;
+				var tasks = new List<Task>(Quotes.Count);
+				foreach (var stock in Quotes) {
+					string id = stock.Key;
+					var (playBack, recent) = stock.Value;
+					tasks.Add(
+						GetRealTimeQuote(id)
+							.ContinueWith(
+								task => {
+									var result = task.Result;
+									if (result.Count > 0 &&
+										result[0]
+											.TradingTime >
+										playBack[^1]
+											.TradingTime)
+										playBack.AddRange(result);
+									recent.Clear();
+								}
+							)
+					);
+				}
+				_lastElapsedFinished = false;
+				Task.WhenAll(tasks)
+					.ContinueWith(
+						_ => _lastElapsedFinished = true
+					);
+			}
+			Synchronizer = new Timer(interval.TotalMilliseconds) {
+				Immediate = true
+			};
+			Synchronizer.Elapsed += Elapsed;
+		}
 
 		/// <summary>
 		///     Whether the manager has been initialized with stock list
 		/// </summary>
 		public bool Initialized { get; private set; }
+
+		/// <summary>
+		///     Whether stock trading is off
+		/// </summary>
+		public bool TradeOff {
+			get {
+				#if MOCK
+				return true
+				#else
+				return DateTime.Now.TimeOfDay.TotalHours is < 9.5 or > 15 || !_isTradeDay;
+				#endif
+			}
+		}
 
 		/// <summary>
 		///     Whether the manager has stopped due to trade off
@@ -37,7 +94,11 @@ namespace Server.Managers {
 		/// <summary>
 		///     Timer for synchronization
 		/// </summary>
-		protected Timer Timer { get; init; }
+		protected Timer Synchronizer { get; init; }
+
+		/// <summary>
+		/// </summary>
+		protected TushareManager Tushare { get; }
 
 		/// <summary>
 		///     Realtime quotes
@@ -53,6 +114,60 @@ namespace Server.Managers {
 		///     Record the last websocket push time of a user on stock list
 		/// </summary>
 		protected Dictionary<string, DateTime> LastListPushTime { get; } = new();
+
+		/// <summary>
+		/// </summary>
+		/// <param name="id"></param>
+		/// <returns></returns>
+		public bool Contains(string id) => Quotes.ContainsKey(id);
+
+		/// <summary>
+		/// </summary>
+		/// <param name="id"></param>
+		/// <param name="quote"></param>
+		public void Add(string id, Quote quote) => Quotes[id].Recent.Add(quote);
+
+		/// <summary>
+		/// </summary>
+		/// <param name="token"></param>
+		public void RemoveToken(string token) {
+			LastTrendPushTime.Remove(token);
+			LastListPushTime.Remove(token);
+		}
+
+		/// <summary>
+		///     Initialize the manager with stock list
+		/// </summary>
+		/// <param name="ids">Stock list</param>
+		/// <returns></returns>
+		public async Task Initialize(string[] ids) {
+			foreach (string id in ids)
+				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
+			_isTradeDay = await Tushare.CheckTradeStatus();
+			var now = DateTime.Now;
+			//Update trade day status at 0:00
+			var statusUpdater = new Timer(now.Date.AddDays(1) - now, TimeSpan.FromDays(1));
+			statusUpdater.Elapsed += (_, _) => Tushare.CheckTradeStatus()
+				.ContinueWith(task => _isTradeDay = task.Result);
+			statusUpdater.Start();
+			//Restart synchronizer when trade is on
+			var restarter = new Timer((now.TimeOfDay.TotalHours >= 9.5 ? now.Date.AddDays(1) : now.Date).AddHours(9.5) - now, TimeSpan.FromDays(1));
+			restarter.Elapsed += (_, _) => {
+				if (!Synchronizer.Enabled && _isTradeDay)
+					Synchronizer.Start();
+			};
+			restarter.Start();
+			await GetRealTimeQuote(ids)
+				.ContinueWith(
+					task => {
+						var result = task.Result;
+						for (int i = 0; i < ids.Length; ++i)
+							Quotes[ids[i]].PlayBack.Add(result[i]);
+						Synchronizer.Start();
+						Initialized = true;
+					}
+				);
+		}
 
 		/// <summary>
 		///     Send get request
@@ -80,7 +195,9 @@ namespace Server.Managers {
 			string uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			#endif
 			string raw = await GetAsync(uri);
-			var rows = raw.Split('\n', '\r').Where(row => !string.IsNullOrEmpty(row)).ToList();
+			var rows = raw.Split('\n', '\r')
+				.Where(row => !string.IsNullOrEmpty(row))
+				.ToList();
 			var result = new List<Quote>(rows.Count);
 			result.AddRange(
 				from row in rows
@@ -109,84 +226,11 @@ namespace Server.Managers {
 		}
 
 		/// <summary>
-		///     Initialize the manager with stock list
-		/// </summary>
-		/// <param name="ids">Stock list</param>
-		/// <returns></returns>
-		public async Task Initialize(string[] ids) {
-			foreach (string id in ids)
-				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
-			bool lastElapsedFinished = true;
-			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (DateTime.Now.TimeOfDay < TimeSpan.FromHours(9.5) || DateTime.Now.TimeOfDay > TimeSpan.FromHours(15)) {
-					Timer.Stop();
-					Stopped = true;
-				}
-				if (!lastElapsedFinished)
-					return;
-				var tasks = new List<Task>(Quotes.Count);
-				foreach (var stock in Quotes) {
-					string id = stock.Key;
-					var (playBack, recent) = stock.Value;
-					tasks.Add(
-						GetRealTimeQuote(id)
-							.ContinueWith(
-								task => {
-									var result = task.Result;
-									if (result.Count > 0 && result[0].TradingTime > playBack[^1].TradingTime)
-										playBack.AddRange(result);
-									recent.Clear();
-								}
-							)
-					);
-				}
-				lastElapsedFinished = false;
-				Task.WhenAll(tasks)
-					.ContinueWith(
-						_ =>
-							lastElapsedFinished = true
-					);
-			}
-			Timer.Elapsed += Elapsed;
-			await GetRealTimeQuote(ids)
-				.ContinueWith(
-					task => {
-						var result = task.Result;
-						for (int i = 0; i < ids.Length; ++i)
-							Quotes[ids[i]].PlayBack.Add(result[i]);
-						Timer.Start();
-						Initialized = true;
-					}
-				);
-		}
-
-		/// <summary>
-		/// </summary>
-		/// <param name="id"></param>
-		/// <returns></returns>
-		public bool Contains(string id) => Quotes.ContainsKey(id);
-
-		/// <summary>
-		/// </summary>
-		/// <param name="id"></param>
-		/// <param name="quote"></param>
-		public void Add(string id, Quote quote) => Quotes[id].Recent.Add(quote);
-
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <param name="token"></param>
-		public void RemoveToken(string token) {
-			LastTrendPushTime.Remove(token);
-			LastListPushTime.Remove(token);
-		}
-
-		/// <summary>
 		/// </summary>
 		/// <param name="token"></param>
 		/// <param name="id"></param>
 		/// <returns></returns>
-		public List<RealtimePrice> GetSingle(string token, string id) {
+		public List<RealtimePrice> GetTrend(string token, string id) {
 			if (!Initialized || Stopped)
 				return null;
 			var now = DateTime.Now;
