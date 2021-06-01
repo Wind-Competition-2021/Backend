@@ -17,7 +17,7 @@ using Server.Managers;
 using Server.Models;
 using Server.Security;
 using Quote = Initiator.Quote;
-using Timer = System.Timers.Timer;
+using Timer = Server.Utilities.Timer;
 
 namespace Server.Controllers {
 	/// <summary>
@@ -91,7 +91,7 @@ namespace Server.Controllers {
 			=> UpdateQuotes(
 				token,
 				(webSocket, config) => {
-					var prices = RealtimeQuotesManager.GetSingle(token, id);
+					var prices = RealtimeQuotesManager.GetTrend(token, id);
 					if (prices == null || prices.Count == 0)
 						return null;
 					foreach (var price in prices)
@@ -121,25 +121,23 @@ namespace Server.Controllers {
 				return BadRequest("Not a websocket request");
 			}
 			var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-			var messageSender = new Timer {
-				Interval = getInterval(ConfigurationManager[token]).TotalMilliseconds,
-				AutoReset = false
+			var messageSender = new Timer(_ => getInterval(ConfigurationManager[token])) {
+				Immediate = true
 			};
 			//Indicate whether the last push has finished
 			bool lastElapsedFinished = true;
 			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
-				if (RealtimeQuotesManager?.Stopped == true)
+				if (RealtimeQuotesManager?.Stopped == true) {
+					messageSender.Close();
 					return;
+				}
 				if (!lastElapsedFinished || RealtimeQuotesManager?.Initialized != true)
-					goto ResetTimer;
+					return;
 				var task = getTasks(webSocket, ConfigurationManager[token]);
 				task?.ContinueWith(_ => lastElapsedFinished = true);
-			ResetTimer:
-				messageSender.Interval = getInterval(ConfigurationManager[token]).TotalMilliseconds;
-				messageSender.Start();
 			}
 			messageSender.Elapsed += Elapsed;
-			Elapsed(null, null);
+			messageSender.Start();
 			var receive = webSocket.Listen(
 				async (text, type) => {
 					if (type != WebSocketMessageType.Text)
