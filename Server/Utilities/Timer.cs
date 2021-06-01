@@ -93,8 +93,8 @@ namespace Server.Utilities {
 				++_count;
 				if (_getInterval != null)
 					Interval = _getInterval(_count);
-				handler.Invoke(sender, e);
 				Enabled = true;
+				handler.Invoke(sender, e);
 			};
 	}
 }

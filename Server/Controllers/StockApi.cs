@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
+using BaoStock;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Server.Attributes;
 using Server.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -12,9 +11,15 @@ namespace Server.Controllers {
 	/// <summary>
 	/// </summary>
 	[ApiController]
-	public class StockApiController : FetcherController {
-		/// <inheritdoc cref="FetcherController(Process,JsonSerializerSettings)"/>
-		public StockApiController(Process fetcher, JsonSerializerSettings settings) : base(fetcher, settings) { }
+	public class StockApiController : ControllerBase {
+		/// <summary>
+		/// </summary>
+		/// <param name="baoStock"></param>
+		public StockApiController(BaoStockManager baoStock) => BaoStock = baoStock;
+
+		/// <summary>
+		/// </summary>
+		protected BaoStockManager BaoStock { get; }
 
 		/// <summary>
 		/// </summary>
@@ -30,7 +35,7 @@ namespace Server.Controllers {
 			[FromQuery] [Required] [RegularExpression(@"[a-zA-Z]{2}\.\d{6}")]
 			string id
 		)
-			=> Ok(Fetch<StockInfo>("getStockInfo", new StockId(id)));
+			=> Ok(BaoStock.Fetch<StockInfo>("getStockInfo", new StockId(id)));
 
 		/// <summary>
 		/// </summary>
@@ -45,7 +50,7 @@ namespace Server.Controllers {
 		[SwaggerResponse(200, type: typeof(List<StockBasicInfo>), description: "List returned successfully")]
 		public IActionResult GetStockList([FromQuery] string type = "default", [FromQuery] DateTime? date = null) {
 			date ??= DateTime.Now.Date;
-			return Ok(Fetch<StockBasicInfo[]>("getStockList", type, date.Value.ToString("yyyy-MM-dd")));
+			return Ok(BaoStock.Fetch<StockBasicInfo[]>("getStockList", type, date.Value.ToString("yyyy-MM-dd")));
 		}
 	}
 }

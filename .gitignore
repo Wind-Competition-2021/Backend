@@ -10,9 +10,9 @@
 !/Server
 /Server/Temp
 /Server/.config
-!/Fetcher
-/Fetcher/Venv/*
-!/Fetcher/Venv/pyvenv.cfg
+!/BaoStock
+/BaoStock/Venv/*
+!/BaoStock/Venv/pyvenv.cfg
 !/Tushare
 !/*.Test/
 !/.gitignore

@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.IO;
+using BaoStock;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Server.Attributes;
 using Server.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -13,9 +11,15 @@ namespace Server.Controllers {
 	/// <summary>
 	/// </summary>
 	[ApiController]
-	public class QuoteApiController : FetcherController {
-		/// <inheritdoc cref="FetcherController(Process,JsonSerializerSettings)"/>
-		public QuoteApiController(Process fetcher, JsonSerializerSettings settings) : base(fetcher, settings) { }
+	public class QuoteApiController : ControllerBase {
+		/// <summary>
+		/// </summary>
+		/// <param name="baoStock"></param>
+		public QuoteApiController(BaoStockManager baoStock) => BaoStock = baoStock;
+
+		/// <summary>
+		/// </summary>
+		protected BaoStockManager BaoStock { get; }
 
 		/// <summary>
 		/// </summary>
@@ -25,7 +29,7 @@ namespace Server.Controllers {
 		[ValidateModelState]
 		[SwaggerOperation("CheckTradeStatus")]
 		[SwaggerResponse(200, type: typeof(bool), description: "Trading status checked successfully")]
-		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(Fetch<bool>("checkTradeStatus", date?.ToString("yyyy-MM-dd")));
+		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(BaoStock.Fetch<bool>("checkTradeStatus", date?.ToString("yyyy-MM-dd")));
 
 		/// <summary>
 		/// </summary>
@@ -51,7 +55,7 @@ namespace Server.Controllers {
 			end ??= DateTime.Now.Date;
 			begin ??= end - TimeSpan.FromDays(30);
 			return Ok(
-				Fetch<DailyPrice[]>(
+				BaoStock.Fetch<DailyPrice[]>(
 					"getDailyPrice",
 					id,
 					begin.Value.ToString("yyyy-MM-dd"),
@@ -87,7 +91,7 @@ namespace Server.Controllers {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromMinutes(frequency * 30);
 			return Ok(
-				Fetch<MinutelyPrice[]>(
+				BaoStock.Fetch<MinutelyPrice[]>(
 					"getDailyPrice",
 					id,
 					begin.Value.ToString("yyyy-MM-dd"),
@@ -124,7 +128,7 @@ namespace Server.Controllers {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromDays((frequency == "month" ? 30 : 7) * 30);
 			return Ok(
-				Fetch<MinutelyPrice[]>(
+				BaoStock.Fetch<MinutelyPrice[]>(
 					"getDailyPrice",
 					id,
 					begin.Value.ToString("yyyy-MM-dd"),

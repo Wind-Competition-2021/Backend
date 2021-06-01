@@ -1,27 +1,27 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
+using BaoStock;
+using Microsoft.AspNetCore.Mvc;
 using Server.Attributes;
-using Server.Security;
-using Microsoft.AspNetCore.Authorization;
 using Server.Models;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Server.Controllers {
 	/// <summary>
-	/// 
 	/// </summary>
 	[ApiController]
-	public class FinancialStatementApiController : FetcherController {
-		/// <inheritdoc cref="FetcherController(Process,JsonSerializerSettings)"/>
-		public FinancialStatementApiController(Process fetcher, JsonSerializerSettings settings) : base(fetcher, settings) { }
+	public class FinancialStatementApiController : ControllerBase {
+		/// <summary>
+		/// </summary>
+		/// <param name="baoStock"></param>
+		public FinancialStatementApiController(BaoStockManager baoStock) => BaoStock = baoStock;
 
 		/// <summary>
-		/// 
+		/// </summary>
+		protected BaoStockManager BaoStock { get; }
+
+		/// <summary>
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="year">Default value is current year</param>
@@ -39,10 +39,9 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(Fetch<CashFlow>("getCashFlow", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<CashFlow>("getCashFlow", new StockId(id), year?.ToString(), quarter?.ToString()));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="year">Default value is current year</param>
@@ -60,10 +59,9 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(Fetch<GrowthAbility>("getGrowthAbility", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<GrowthAbility>("getGrowthAbility", new StockId(id), year?.ToString(), quarter?.ToString()));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="year">Default value is current year</param>
@@ -81,10 +79,9 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(Fetch<OperationalCapability>("getOperationalCapability", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<OperationalCapability>("getOperationalCapability", new StockId(id), year?.ToString(), quarter?.ToString()));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="begin"></param>
@@ -102,10 +99,9 @@ namespace Server.Controllers {
 			[FromQuery] DateTime? begin,
 			[FromQuery] DateTime? end
 		)
-			=> Ok(Fetch<PerformanceForecast>("getPerformanceForecast", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
+			=> Ok(BaoStock.Fetch<PerformanceForecast>("getPerformanceForecast", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="begin"></param>
@@ -123,10 +119,9 @@ namespace Server.Controllers {
 			[FromQuery] DateTime? begin,
 			[FromQuery] DateTime? end
 		)
-			=> Ok(Fetch<PerformanceReport>("getPerformanceReport", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
+			=> Ok(BaoStock.Fetch<PerformanceReport>("getPerformanceReport", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="year">Default value is current year</param>
@@ -144,10 +139,9 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(Fetch<Profitability>("getProfitability", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<Profitability>("getProfitability", new StockId(id), year?.ToString(), quarter?.ToString()));
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="id"></param>
 		/// <param name="year">Default value is current year</param>
@@ -165,6 +159,6 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(Fetch<Solvency>("getSolvency", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<Solvency>("getSolvency", new StockId(id), year?.ToString(), quarter?.ToString()));
 	}
 }

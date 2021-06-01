@@ -1,9 +1,8 @@
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
+using BaoStock;
 using Colorful;
 using Initiator;
 using Microsoft.AspNetCore.Authentication;
@@ -99,39 +98,18 @@ namespace Server {
 			//Inject ConfigurationManager
 			services.AddSingleton(new ConfigurationManager());
 
-			//Inject Fetcher
-			string fetcherRoot = Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent!.FullName, "Fetcher");
-			string venvPath = Path.Combine(fetcherRoot, "Venv");
-			string pythonPath = Directory.GetDirectories(venvPath)
-				.Select(path => Directory.GetFiles(path, "python*"))
-				.Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
-			var processInfo = new ProcessStartInfo {
-				FileName = $"\"{pythonPath ?? throw new FileNotFoundException("Python not found in Venv")}\"",
-				Arguments = $"\"{Path.Combine(fetcherRoot, "Fetcher.py")}\"",
-				UseShellExecute = false,
-				RedirectStandardInput = true,
-				RedirectStandardOutput = true,
-				StandardOutputEncoding = Encoding.UTF8,
-				RedirectStandardError = true
-			};
-			var process = Process.Start(processInfo);
-			process!.Exited += (_, _) => {
-				Console.Error.WriteLine("Fetcher exited", Color.Red);
-				if (!process.StandardError.EndOfStream)
-					Console.Error.WriteLine(process.StandardError.ReadToEnd(), Color.Red);
-				process = Process.Start(processInfo);
-			};
-			services.AddSingleton(process);
-
 			//Inject custom serializer settings
-			var settings = new JsonSerializerSettings() {
-				Error = (_, args) => {
-					Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
-					process.Kill();
-					process.Start();
-				}
-			};
+			var settings = new JsonSerializerSettings();
 			services.AddSingleton(settings);
+
+			//Inject BaoStock
+			var baostock = new BaoStockManager(settings);
+			settings.Error += (_, args) => {
+				Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
+				baostock.Process.Kill();
+				baostock.Process.Start();
+			};
+			services.AddSingleton(baostock);
 
 			//Inject Tushare
 			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", settings);

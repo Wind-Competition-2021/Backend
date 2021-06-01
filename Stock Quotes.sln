@@ -7,18 +7,20 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Initiator", "Initiator\Init
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Server\Server.csproj", "{69E3F892-97A0-4A1F-A3E8-B8278EC810DB}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Fetcher", "Fetcher\Fetcher.pyproj", "{5E5BA6CB-8AF8-4776-B68F-83C253A22AD5}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E551BF86-CDDC-45CF-BEC1-D2ECFF643152}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tushare", "Tushare\Tushare.csproj", "{63D3C439-4A6F-4DB2-A70B-252EA3920483}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tushare", "Tushare\Tushare.csproj", "{63D3C439-4A6F-4DB2-A70B-252EA3920483}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tushare.Test", "Tushare.Test\Tushare.Test.csproj", "{AA11F143-6DF8-445F-95AB-E3AB89EFA788}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tushare.Test", "Tushare.Test\Tushare.Test.csproj", "{AA11F143-6DF8-445F-95AB-E3AB89EFA788}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Try", "Try\Try.csproj", "{1A5487C6-0C71-4F35-97CB-EB785DA88006}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server.Test", "Server.Test\Server.Test.csproj", "{99966C1E-04D0-4EFB-B2F2-A9107164478A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaoStock", "BaoStock\BaoStock.csproj", "{8650DD08-6869-48D7-A807-D908EE4ECF4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,8 +36,6 @@ Global
 		{69E3F892-97A0-4A1F-A3E8-B8278EC810DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69E3F892-97A0-4A1F-A3E8-B8278EC810DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69E3F892-97A0-4A1F-A3E8-B8278EC810DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5E5BA6CB-8AF8-4776-B68F-83C253A22AD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5E5BA6CB-8AF8-4776-B68F-83C253A22AD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63D3C439-4A6F-4DB2-A70B-252EA3920483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{63D3C439-4A6F-4DB2-A70B-252EA3920483}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63D3C439-4A6F-4DB2-A70B-252EA3920483}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -48,6 +48,14 @@ Global
 		{1A5487C6-0C71-4F35-97CB-EB785DA88006}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A5487C6-0C71-4F35-97CB-EB785DA88006}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1A5487C6-0C71-4F35-97CB-EB785DA88006}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99966C1E-04D0-4EFB-B2F2-A9107164478A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99966C1E-04D0-4EFB-B2F2-A9107164478A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99966C1E-04D0-4EFB-B2F2-A9107164478A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99966C1E-04D0-4EFB-B2F2-A9107164478A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8650DD08-6869-48D7-A807-D908EE4ECF4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8650DD08-6869-48D7-A807-D908EE4ECF4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8650DD08-6869-48D7-A807-D908EE4ECF4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8650DD08-6869-48D7-A807-D908EE4ECF4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
