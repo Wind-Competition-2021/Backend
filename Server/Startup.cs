@@ -22,6 +22,7 @@ using Newtonsoft.Json.Serialization;
 using Server.Filters;
 using Server.Managers;
 using Server.Security;
+using Tushare;
 using Console = Colorful.Console;
 
 namespace Server {
@@ -101,7 +102,9 @@ namespace Server {
 			//Inject Fetcher
 			string fetcherRoot = Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent!.FullName, "Fetcher");
 			string venvPath = Path.Combine(fetcherRoot, "Venv");
-			string pythonPath = Directory.GetDirectories(venvPath).Select(path => Directory.GetFiles(path, "python*")).Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
+			string pythonPath = Directory.GetDirectories(venvPath)
+				.Select(path => Directory.GetFiles(path, "python*"))
+				.Aggregate(null as string, (path, next) => next.Length > 0 ? next[0] : path);
 			var processInfo = new ProcessStartInfo {
 				FileName = $"\"{pythonPath ?? throw new FileNotFoundException("Python not found in Venv")}\"",
 				Arguments = $"\"{Path.Combine(fetcherRoot, "Fetcher.py")}\"",
@@ -121,18 +124,21 @@ namespace Server {
 			services.AddSingleton(process);
 
 			//Inject custom serializer settings
-			services.AddSingleton(
-				new JsonSerializerSettings() {
-					Error = (_, args) => {
-						Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
-						process.Kill();
-						process.Start();
-					}
+			var settings = new JsonSerializerSettings() {
+				Error = (_, args) => {
+					Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
+					process.Kill();
+					process.Start();
 				}
-			);
+			};
+			services.AddSingleton(settings);
+
+			//Inject Tushare
+			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", settings);
+			services.AddSingleton(tushare);
 
 			//Inject RealtimeQuotesManager
-			var realtimeQuotesManager = new RealtimeQuotesManager();
+			var realtimeQuotesManager = new RealtimeQuotesManager(tushare);
 			services.AddSingleton(realtimeQuotesManager);
 
 			//Inject QuickQuotesInitiator
