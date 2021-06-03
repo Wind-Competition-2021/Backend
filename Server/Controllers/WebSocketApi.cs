@@ -225,12 +225,12 @@ namespace Server.Controllers {
 			//Indicate whether the last push has finished
 			bool lastElapsedFinished = true;
 			void Elapsed(object o, ElapsedEventArgs elapsedEventArgs) {
+				if (!lastElapsedFinished || RealtimeQuotesManager?.Initialized != true)
+					return;
 				if (RealtimeQuotesManager?.Stopped == true) {
 					messageSender.Close();
 					return;
 				}
-				if (!lastElapsedFinished || RealtimeQuotesManager?.Initialized != true)
-					return;
 				var task = getTasks(webSocket, ConfigurationManager[token]);
 				task?.ContinueWith(_ => lastElapsedFinished = true);
 			}
@@ -251,7 +251,7 @@ namespace Server.Controllers {
 			);
 			var send = Task.Run(
 				async () => {
-					while (RealtimeQuotesManager?.Stopped != true)
+					while (!RealtimeQuotesManager.Initialized || RealtimeQuotesManager?.Stopped != true)
 						await Task.Delay(TimeSpan.FromMinutes(1));
 					return new WebSocketReceiveResult(0, WebSocketMessageType.Close, true, WebSocketCloseStatus.NormalClosure, "Trade Off");
 				}
