@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
+using Shared;
 
 namespace Server.Models {
 	/// <summary>
@@ -17,6 +19,13 @@ namespace Server.Models {
 		[JsonProperty(ItemConverterType = typeof(StockIdConverter))]
 		[DataMember(Name = "pinnedStocks")]
 		public List<StockId> PinnedStocks { get; set; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[DataMember(Name = "playbackSpeed")]
+		[Range(1, int.MaxValue)]
+		public int PlaybackSpeed { get; set; }
 
 		/// <summary>
 		///     List and trend refresh interval
