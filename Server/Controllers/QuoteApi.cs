@@ -92,7 +92,7 @@ namespace Server.Controllers {
 			begin ??= end - TimeSpan.FromMinutes(frequency * 30);
 			return Ok(
 				BaoStock.Fetch<MinutelyPrice[]>(
-					"getDailyPrice",
+					"getMinutelyPrice",
 					id,
 					begin.Value.ToString("yyyy-MM-dd"),
 					end.Value.ToString("yyyy-MM-dd"),
@@ -128,8 +128,8 @@ namespace Server.Controllers {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromDays((frequency == "month" ? 30 : 7) * 30);
 			return Ok(
-				BaoStock.Fetch<MinutelyPrice[]>(
-					"getDailyPrice",
+				BaoStock.Fetch<WeeklyPrice[]>(
+					"getWeeklyPrice",
 					id,
 					begin.Value.ToString("yyyy-MM-dd"),
 					end.Value.ToString("yyyy-MM-dd"),
