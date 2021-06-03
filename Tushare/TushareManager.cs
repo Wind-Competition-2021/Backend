@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
+using Shared;
+using Tushare.Models;
 
 namespace Tushare {
 	/// <summary>
@@ -20,7 +22,13 @@ namespace Tushare {
 			/// <summary>
 			/// </summary>
 			[EnumMember(Value = "trade_cal")]
-			TradeCalendar
+			TradeCalendar,
+
+			/// <summary>
+			/// 
+			/// </summary>
+			[EnumMember(Value = "stock_company")]
+			CompanyInformation
 		}
 
 		/// <summary>
@@ -105,6 +113,17 @@ namespace Tushare {
 				new[] {"is_open"}
 			);
 			return ((JValue)response.Data.Items[0][0]).Value?.Equals(1L) ?? throw new NullReferenceException();
+		}
+
+		public async Task<CompanyInformation> GetCompanyInformation(StockId id) {
+			var response = await SendRequest<CompanyInformation>(
+				Api.CompanyInformation,
+				new Dictionary<string, string>() {
+					{"ts_code", id.ToString("t")}
+				},
+				new[] {"ts_code", "chairman", "manager", "secretary", "reg_capital", "setup_date", "province", "city", "introduction", "website", "email", "office", "employees", "main_business", "business_scope"}
+			);
+			return response.Data.Records?.FirstOrDefault();
 		}
 
 		/// <summary>

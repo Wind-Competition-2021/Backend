@@ -1,5 +1,7 @@
 using System.Threading.Tasks;
+using NuGet.Frameworks;
 using NUnit.Framework;
+using Shared;
 
 namespace Tushare.Test {
 	public class TushareTest {
@@ -14,6 +16,13 @@ namespace Tushare.Test {
 		public async Task CheckTradeStatus() {
 			bool status = await TuShare.CheckTradeStatus();
 			Assert.IsTrue(status);
+		}
+
+		[Test]
+		public async Task GetCompanyInformation() {
+			StockId id = "sh.600519";
+			var result = await TuShare.GetCompanyInformation(id);
+			Assert.AreEqual(result.Id.ToString("b"), id.ToString("b"));
 		}
 	}
 }

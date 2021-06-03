@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using BaoStock;
 using Microsoft.AspNetCore.Mvc;
 using Server.Attributes;
 using Server.Models;
+using Shared;
 using Swashbuckle.AspNetCore.Annotations;
+using Tushare;
 
 namespace Server.Controllers {
 	/// <summary>
@@ -15,11 +18,20 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		/// <param name="baoStock"></param>
-		public StockApiController(BaoStockManager baoStock) => BaoStock = baoStock;
+		/// <param name="tushare"></param>
+		public StockApiController(BaoStockManager baoStock, TushareManager tushare) {
+			BaoStock = baoStock;
+			Tushare = tushare;
+		}
 
 		/// <summary>
 		/// </summary>
 		protected BaoStockManager BaoStock { get; }
+
+		/// <summary>
+		/// 
+		/// </summary>
+		protected TushareManager Tushare { get; }
 
 		/// <summary>
 		/// </summary>
@@ -31,11 +43,27 @@ namespace Server.Controllers {
 		[ValidateModelState]
 		[SwaggerOperation("GetStockInfo")]
 		[SwaggerResponse(200, type: typeof(StockInfo), description: "Information returned successfully")]
-		public IActionResult GetStockInfo(
+		public async Task<IActionResult> GetStockInfo(
 			[FromQuery] [Required] [RegularExpression(@"[a-zA-Z]{2}\.\d{6}")]
 			string id
-		)
-			=> Ok(BaoStock.Fetch<StockInfo>("getStockInfo", new StockId(id)));
+		) {
+			var info = BaoStock.Fetch<StockInfo>("getStockInfo", new StockId(id));
+			var extra = await Tushare.GetCompanyInformation(id);
+			info.RegisteredCapital = extra.RegisterCapital;
+			info.LegalRepresentative = extra.LegalRepresentative;
+			info.GeneralManager = extra.GeneralManager;
+			info.Secretary = extra.Secretary;
+			info.EmployeeCount = extra.EmployeeCount;
+			info.Province = extra.Province;
+			info.City = extra.City;
+			info.Office = extra.Office;
+			info.Email = extra.Email;
+			info.Website = extra.Website;
+			info.BusinessScope = extra.BusinessScope;
+			info.MainBusiness = extra.MainBusiness;
+			info.Introduction = extra.Introduction;
+			return Ok(info);
+		}
 
 		/// <summary>
 		/// </summary>
