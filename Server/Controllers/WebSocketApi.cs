@@ -151,7 +151,7 @@ namespace Server.Controllers {
 						string[] ids = JsonConvert.DeserializeObject<string[]>(content, SerializerSettings);
 						enumerators = new IEnumerator<MinutelyPrice>[ids!.Length];
 						for (int i = 0; i < ids.Length; ++i)
-							enumerators[i] = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", ((StockId)ids[i]).ToString("b"), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")).AsEnumerable().GetEnumerator();
+							enumerators[i] = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)ids[i], begin, end, 5).AsEnumerable().GetEnumerator();
 					}
 					catch (Exception) {
 						// ignored
@@ -172,7 +172,7 @@ namespace Server.Controllers {
 		[HttpGet("/api/quote/playback/trend")]
 		[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
 		public Task<IActionResult> ReplayQuotesTrend([FromQuery] [Required] string token, [FromQuery] [Required] string id, [FromQuery] DateTime? begin, [FromQuery] DateTime? end) {
-			var collection = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", ((StockId)id).ToString("b"), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd"));
+			var collection = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)id, begin, end, 5);
 			var enumerator = collection.AsEnumerable().GetEnumerator();
 			var time = TimeSpan.FromMinutes(5 * Math.Max(114, (int)Math.Floor(begin!.Value.TimeOfDay.TotalMinutes / 5)));
 			bool first = true;
