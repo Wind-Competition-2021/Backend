@@ -29,7 +29,7 @@ namespace Server.Controllers {
 		[ValidateModelState]
 		[SwaggerOperation("CheckTradeStatus")]
 		[SwaggerResponse(200, type: typeof(bool), description: "Trading status checked successfully")]
-		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(BaoStock.Fetch<bool>("checkTradeStatus", date?.ToString("yyyy-MM-dd")));
+		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(BaoStock.Fetch<bool>("checkTradeStatus", date));
 
 		/// <summary>
 		/// </summary>
@@ -54,15 +54,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now.Date;
 			begin ??= end - TimeSpan.FromDays(30);
-			return Ok(
-				BaoStock.Fetch<DailyPrice[]>(
-					"getDailyPrice",
-					id,
-					begin.Value.ToString("yyyy-MM-dd"),
-					end.Value.ToString("yyyy-MM-dd"),
-					rehabilitation
-				)
-			);
+			return Ok(BaoStock.Fetch<DailyPrice[]>("getDailyPrice", id, begin, end, rehabilitation));
 		}
 
 		/// <summary>
@@ -90,16 +82,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromMinutes(frequency * 30);
-			return Ok(
-				BaoStock.Fetch<MinutelyPrice[]>(
-					"getMinutelyPrice",
-					id,
-					begin.Value.ToString("yyyy-MM-dd"),
-					end.Value.ToString("yyyy-MM-dd"),
-					frequency.ToString(),
-					rehabilitation
-				)
-			);
+			return Ok(BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", id, begin, end, frequency, rehabilitation));
 		}
 
 		/// <summary>
@@ -127,16 +110,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromDays((frequency == "month" ? 30 : 7) * 30);
-			return Ok(
-				BaoStock.Fetch<WeeklyPrice[]>(
-					"getWeeklyPrice",
-					id,
-					begin.Value.ToString("yyyy-MM-dd"),
-					end.Value.ToString("yyyy-MM-dd"),
-					frequency,
-					rehabilitation
-				)
-			);
+			return Ok(BaoStock.Fetch<WeeklyPrice[]>("getWeeklyPrice", id, begin, end, frequency, rehabilitation));
 		}
 	}
 }

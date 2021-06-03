@@ -40,7 +40,7 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(BaoStock.Fetch<Profitability>("getProfitability", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<Profitability>("getProfitability", (StockId)id, year, quarter));
 
 		/// <summary>
 		/// </summary>
@@ -60,7 +60,7 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(BaoStock.Fetch<OperationalCapability>("getOperationalCapability", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<OperationalCapability>("getOperationalCapability", (StockId)id, year, quarter));
 
 		/// <summary>
 		/// </summary>
@@ -80,7 +80,7 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(BaoStock.Fetch<GrowthAbility>("getGrowthAbility", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<GrowthAbility>("getGrowthAbility", (StockId)id, year, quarter));
 
 		/// <summary>
 		/// </summary>
@@ -100,7 +100,7 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(BaoStock.Fetch<Solvency>("getSolvency", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<Solvency>("getSolvency", (StockId)id, year, quarter));
 
 		/// <summary>
 		/// </summary>
@@ -120,7 +120,7 @@ namespace Server.Controllers {
 			[FromQuery] int? year,
 			[FromQuery] int? quarter
 		)
-			=> Ok(BaoStock.Fetch<CashFlow>("getCashFlow", new StockId(id), year?.ToString(), quarter?.ToString()));
+			=> Ok(BaoStock.Fetch<CashFlow>("getCashFlow", (StockId)id, year, quarter));
 
 		/// <summary>
 		/// </summary>
@@ -140,7 +140,7 @@ namespace Server.Controllers {
 			[FromQuery] DateTime? begin,
 			[FromQuery] DateTime? end
 		)
-			=> Ok(BaoStock.Fetch<PerformanceReport[]>("getPerformanceReport", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
+			=> Ok(BaoStock.Fetch<PerformanceReport[]>("getPerformanceReport", (StockId)id, begin, end));
 
 		/// <summary>
 		/// </summary>
@@ -160,6 +160,6 @@ namespace Server.Controllers {
 			[FromQuery] DateTime? begin,
 			[FromQuery] DateTime? end
 		)
-			=> Ok(BaoStock.Fetch<PerformanceForecast[]>("getPerformanceForecast", new StockId(id), begin?.ToString("yyyy-MM-dd"), end?.ToString("yyyy-MM-dd")));
+			=> Ok(BaoStock.Fetch<PerformanceForecast[]>("getPerformanceForecast", (StockId)id, begin, end));
 	}
 }

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Shared;
 using Newtonsoft.Json;
 
 namespace BaoStock {
@@ -60,6 +61,25 @@ namespace BaoStock {
 				result = JsonConvert.DeserializeObject<T>(json ?? string.Empty, SerializerSettings);
 			}
 			return result;
+		}
+
+		/// <summary>
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="apiName"></param>
+		/// <param name="args"></param>
+		/// <returns></returns>
+		public T Fetch<T>(string apiName, params object[] args) {
+			string[] arguments = args.Select(
+					argument => argument switch {
+						DateTime arg => arg.ToString("yyyy-MM-dd"),
+						StockId arg  => arg.ToString("b"),
+						null         => null,
+						_            => argument.ToString()
+					}
+				)
+				.ToArray();
+			return Fetch<T>(apiName, arguments);
 		}
 	}
 }
