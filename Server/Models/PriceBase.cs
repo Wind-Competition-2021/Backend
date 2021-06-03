@@ -35,6 +35,25 @@ namespace Server.Models {
 	[DataContract]
 	public class PriceBase : IEquatable<PriceBase> {
 		/// <summary>
+		///     Default constructor
+		/// </summary>
+		public PriceBase() { }
+
+		/// <summary>
+		///     Copy constructor
+		/// </summary>
+		/// <param name="other"></param>
+		public PriceBase(PriceBase other) {
+			Id = other.Id;
+			Opening = other.Opening;
+			Closing = other.Closing;
+			Highest = other.Highest;
+			Lowest = other.Lowest;
+			Volume = other.Volume;
+			Turnover = other.Turnover;
+		}
+
+		/// <summary>
 		///     Id of the stock, example: sh.600001
 		/// </summary>
 		[JsonConverter(typeof(StockIdConverter))]

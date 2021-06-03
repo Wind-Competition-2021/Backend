@@ -16,6 +16,12 @@ namespace Server.Models {
 		public RealtimePrice() { }
 
 		/// <summary>
+		/// Base copy constructor
+		/// </summary>
+		/// <param name="other"></param>
+		public RealtimePrice(PriceBase other) : base(other) { }
+
+		/// <summary>
 		/// </summary>
 		/// <param name="quote"></param>
 		/// <param name="id"></param>
