@@ -235,7 +235,6 @@ namespace Server.Controllers {
 				task?.ContinueWith(_ => lastElapsedFinished = true);
 			}
 			messageSender.Elapsed += Elapsed;
-			messageSender.Start();
 			var receive = webSocket.Listen(
 				async (text, type) => {
 					if (type != WebSocketMessageType.Text)
@@ -243,6 +242,7 @@ namespace Server.Controllers {
 					try {
 						string[] ids = JsonConvert.DeserializeObject<string[]>(text, SerializerSettings);
 						await RealtimeQuotesManager.Initialize(ids);
+						messageSender.Start();
 					}
 					catch (Exception) {
 						// ignored

@@ -26,5 +26,16 @@ namespace Server.Utilities.Test {
 			timer.Start();
 			await Task.Delay(TimeSpan.FromSeconds(4));
 		}
+
+		[Test]
+		public void Immediate() {
+			var timer = new Timer(2000) {
+				Immediate = true
+			};
+			bool elapsed = false;
+			timer.Elapsed += (sender, e) => elapsed = true;
+			timer.Start();
+			Assert.IsTrue(elapsed);
+		}
 	}
 }

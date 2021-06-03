@@ -48,7 +48,7 @@ namespace Server.Utilities {
 		/// <summary>
 		/// 
 		/// </summary>
-		public bool Immediate { get; set; } = false;
+		public bool Immediate { get; init; } = false;
 
 		/// <summary>
 		/// 
@@ -81,6 +81,9 @@ namespace Server.Utilities {
 				base.Elapsed -= handler;
 			}
 		}
+
+		/// <inheritdoc cref="System.Timers.Timer.Start"/>
+		public new void Start() => Enabled = true;
 
 		/// <inheritdoc cref="System.Timers.Timer.Close"/>
 		public new void Close() {
