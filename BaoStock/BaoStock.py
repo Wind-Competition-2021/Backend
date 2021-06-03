@@ -136,7 +136,7 @@ getPerformanceReportMap: dict[str, tuple[str, Callable[[str], Any]]] = {
     "performanceExpressGRYOY": ("grgr", toFloat),
     "performanceExpressOPYOY": ("opgr", toFloat)
 }
-getPerformanceForcastMap: dict[str, tuple[str, Callable[[str], Any]]] = {
+getPerformanceForecastMap: dict[str, tuple[str, Callable[[str], Any]]] = {
     "code": ("id", default),
     "profitForcastExpPubDate": ("publishDate", default),
     "profitForcastExpStatDate": ("statDate", default),
@@ -263,8 +263,8 @@ def getPerformanceForecast(id: str, begin: str = None, end: str = None):
     data = BaoStock.query_forecast_report(id, begin, end).get_data()
     result = []
     for row in data.iterrows():
-        result.append({getPerformanceForcastMap[key][0]: getPerformanceForcastMap[key][1](
-            row[1][key]) for key in data.keys() if key in getPerformanceForcastMap})
+        result.append({getPerformanceForecastMap[key][0]: getPerformanceForecastMap[key][1](
+            row[1][key]) for key in data.keys() if key in getPerformanceForecastMap})
     return result
 
 
@@ -327,7 +327,7 @@ if __name__ == "__main__":
             result = getCashFlow(*args)
         elif operation == "getPerformanceReport":
             result = getPerformanceReport(*args)
-        elif operation == "getPerformanceForcast":
+        elif operation == "getPerformanceForecast":
             result = getPerformanceForecast(*args)
         elif operation == "exit":
             with HiddenPrints():
