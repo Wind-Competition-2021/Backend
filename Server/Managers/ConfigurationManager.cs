@@ -18,6 +18,7 @@ namespace Server.Managers {
 		public static Configuration DefaultConfiguration
 			=> new() {
 				PinnedStocks = new List<StockId>(),
+				PlaybackSpeed = 60,
 				RefreshInterval = new RefreshInterval {
 					List = TimeSpan.FromSeconds(5),
 					Trend = TimeSpan.FromMinutes(1)
