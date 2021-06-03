@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using Initiator;
 using Server.Models;
 using Tushare;
 using Timer = Server.Utilities.Timer;
+using Console = Colorful.Console;
 
 namespace Server.Managers {
 	/// <summary>
@@ -30,10 +32,8 @@ namespace Server.Managers {
 		public RealtimeQuotesManager(TimeSpan interval, TushareManager tushare) {
 			Tushare = tushare;
 			void Elapsed(object sender, ElapsedEventArgs e) {
-				if (TradeOff) {
+				if (TradeOff)
 					Synchronizer.Stop();
-					Stopped = true;
-				}
 				if (!_lastElapsedFinished)
 					return;
 				var tasks = new List<Task>(Quotes.Count);
@@ -89,7 +89,7 @@ namespace Server.Managers {
 		/// <summary>
 		///     Whether the manager has stopped due to trade off
 		/// </summary>
-		public bool Stopped { get; private set; }
+		public bool Stopped => !Synchronizer.Enabled;
 
 		/// <summary>
 		///     Timer for synchronization
@@ -148,13 +148,20 @@ namespace Server.Managers {
 			//Update trade day status at 0:00
 			var statusUpdater = new Timer(now.Date.AddDays(1) - now, TimeSpan.FromDays(1));
 			statusUpdater.Elapsed += (_, _) => Tushare.CheckTradeStatus()
-				.ContinueWith(task => _isTradeDay = task.Result);
+				.ContinueWith(
+					task => {
+						_isTradeDay = task.Result;
+						Console.WriteLine($"{DateTime.Now:yyyy-MM-dd hh:mm:ss}: Today {(task.Result ? "is" : "isn't")} trade day", Color.Magenta);
+					}
+				);
 			statusUpdater.Start();
 			//Restart synchronizer when trade is on
 			var restarter = new Timer((now.TimeOfDay.TotalHours >= 9.5 ? now.Date.AddDays(1) : now.Date).AddHours(9.5) - now, TimeSpan.FromDays(1));
 			restarter.Elapsed += (_, _) => {
-				if (!Synchronizer.Enabled && _isTradeDay)
+				if (!Synchronizer.Enabled && _isTradeDay) {
 					Synchronizer.Start();
+					Console.WriteLine($"{DateTime.Now:yyyy-MM-dd hh:mm:ss}: Synchronizer restarted", Color.Yellow);
+				}
 			};
 			restarter.Start();
 			await GetRealTimeQuote(ids)
