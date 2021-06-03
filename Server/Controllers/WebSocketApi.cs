@@ -143,7 +143,7 @@ namespace Server.Controllers {
 						webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Playback Finished", CancellationToken.None);
 					return webSocket.SendAsync(message);
 				},
-				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed),
+				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value),
 				(content, type) => {
 					if (type != WebSocketMessageType.Text)
 						return Task.CompletedTask;
@@ -195,7 +195,7 @@ namespace Server.Controllers {
 					}
 					return webSocket.SendAsync(message);
 				},
-				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed)
+				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value)
 			);
 		}
 

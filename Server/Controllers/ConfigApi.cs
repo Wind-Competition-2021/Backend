@@ -77,6 +77,8 @@ namespace Server.Controllers {
 				if (body.RefreshInterval.List.HasValue)
 					config.RefreshInterval.Trend = body.RefreshInterval.List;
 			}
+			if (body.PlaybackSpeed != null)
+				config.PlaybackSpeed = body.PlaybackSpeed;
 			if (body.PinnedStocks != null)
 				config.PinnedStocks = body.PinnedStocks;
 

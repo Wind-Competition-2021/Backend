@@ -25,7 +25,7 @@ namespace Server.Models {
 		/// </summary>
 		[DataMember(Name = "playbackSpeed")]
 		[Range(1, int.MaxValue)]
-		public int PlaybackSpeed { get; set; }
+		public int? PlaybackSpeed { get; set; }
 
 		/// <summary>
 		///     List and trend refresh interval
