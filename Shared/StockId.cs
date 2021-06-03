@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
-namespace Server.Models {
+namespace Shared {
 	/// <summary>
 	/// </summary>
-	public class StockId : IEquatable<StockId> {
+	public class StockId : IEquatable<StockId>, IFormattable {
 		private static readonly Regex Pattern = new(@"^(?:(?<exchange>[a-z]{2})\.(?<code>\d{6}))|(?:(?<code>\d{6})\.(?<exchange>[a-z]{2}))$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
 		/// <summary>
@@ -16,7 +16,7 @@ namespace Server.Models {
 			var result = Pattern.Match(id);
 			if (!result.Success)
 				throw new FormatException($"Parameter {nameof(id)} doesn't match required pattern");
-			Exchange = result.Groups["exchange"].Value.ToLower();
+			Exchange = result.Groups["exchange"].Value;
 			Code = result.Groups["code"].Value;
 		}
 
@@ -44,7 +44,7 @@ namespace Server.Models {
 		/// </summary>
 		/// <param name="other"></param>
 		/// <returns></returns>
-		public bool Equals(StockId other) => Code == other?.Code && Exchange == other?.Exchange;
+		public bool Equals(StockId other) => string.Equals(Code.ToUpper(), other?.Code?.ToUpper(), StringComparison.CurrentCultureIgnoreCase) && string.Equals(Exchange, other?.Exchange, StringComparison.CurrentCultureIgnoreCase);
 
 		/// <inheritdoc />
 		public override bool Equals(object obj) {
@@ -82,11 +82,15 @@ namespace Server.Models {
 		/// <returns></returns>
 		public static bool operator !=(StockId one, StockId other) => !(one == other);
 
-		/// <summary>
-		/// </summary>
-		/// <param name="format"></param>
-		/// <returns></returns>
-		public string ToString(string format = "prefix") => format == "suffix" ? $"{Code}.{Exchange}" : $"{Exchange}.{Code}";
+		public string ToString(string format = "p", IFormatProvider formatProvider = null)
+			=> format.ToUpper() switch {
+				"S" or "SUFFIX"   => $"{Code}.{Exchange}",
+				"T" or "TUSHARE"  => $"{Code}.{Exchange.ToUpper()}",
+				"P" or "PREFIX"   => $"{Exchange}.{Code}",
+				"B" or "BAOSTOCK" => $"{Exchange.ToLower()}.{Code}",
+				"C" or "CODE"     => Code,
+				_                 => throw new FormatException()
+			};
 	}
 
 	/// <inheritdoc />

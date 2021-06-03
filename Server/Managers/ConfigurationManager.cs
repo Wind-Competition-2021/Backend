@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Server.Models;
+using Shared;
 
 namespace Server.Managers {
 	/// <summary>

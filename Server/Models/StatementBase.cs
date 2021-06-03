@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Shared;
 
 namespace Server.Models {
 	/// <summary>
