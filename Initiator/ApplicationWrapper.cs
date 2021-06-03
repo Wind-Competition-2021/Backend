@@ -120,7 +120,7 @@ namespace Initiator {
 			SessionLoggedOut(this, new SessionEventArgs(sessionId));
 			if (_startTime == default)
 				_startTime = DateTime.Now;
-			else
+			else if (_logoutTime != default)
 				_startTime = DateTime.Now - (_logoutTime - _startTime);
 
 			if (!Sessions.ContainsKey(sessionId))
@@ -231,10 +231,10 @@ namespace Initiator {
 
 	public static class MessageUtility {
 		public static void Print(this Message message) {
-			var raw = message.ToString();
+			string raw = message.ToString();
 			var fields = raw.Split((char)1).Where(field => !string.IsNullOrEmpty(field));
-			foreach (var field in fields) {
-				var pair = field.Split('=');
+			foreach (string field in fields) {
+				string[] pair = field.Split('=');
 				Console.WriteFormatted("{0}={1} ", Color.AliceBlue, new Formatter(pair[0], Color.Cyan), new Formatter(pair[1], Color.DarkSalmon));
 			}
 			Console.WriteLine();

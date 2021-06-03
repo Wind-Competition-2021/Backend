@@ -116,16 +116,18 @@ namespace Server {
 			services.AddSingleton(tushare);
 
 			//Inject RealtimeQuotesManager
-			var realtimeQuotesManager = new RealtimeQuotesManager(tushare);
+			var realtimeQuotesManager = new RealtimeQuotesManager(TimeSpan.FromSeconds(5), tushare);
 			services.AddSingleton(realtimeQuotesManager);
 
 			//Inject QuickQuotesInitiator
-			var initiator = new StockQuotesInitiator(@"..\Initiator\Config\Initiator.cfg");
+			var initiator = new StockQuotesInitiator();
 			initiator.DefaultSession = initiator.Sessions.First();
+			services.AddSingleton(initiator);
+			#if INITIATOR
 			initiator.Start();
 			initiator.LogIn();
-			//initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
-			services.AddSingleton(initiator);
+			initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
+			#endif
 		}
 
 		/// <summary>
