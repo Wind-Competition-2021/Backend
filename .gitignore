@@ -8,8 +8,6 @@
 !/Mock
 /Mock/.vscode
 !/Server
-/Server/Temp
-/Server/.config
 !/BaoStock
 /BaoStock/Venv/*
 !/BaoStock/Venv/pyvenv.cfg
