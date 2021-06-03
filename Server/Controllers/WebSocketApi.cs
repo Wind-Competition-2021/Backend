@@ -235,6 +235,8 @@ namespace Server.Controllers {
 				task?.ContinueWith(_ => lastElapsedFinished = true);
 			}
 			messageSender.Elapsed += Elapsed;
+			if (RealtimeQuotesManager.Initialized)
+				messageSender.Start();
 			var receive = webSocket.Listen(
 				async (text, type) => {
 					if (type != WebSocketMessageType.Text)
