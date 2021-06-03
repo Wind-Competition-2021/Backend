@@ -57,7 +57,6 @@ namespace Server.Controllers {
 		public ConfigurationManager ConfigurationManager { get; }
 
 		/// <summary>
-		/// 
 		/// </summary>
 		public BaoStockManager BaoStock { get; }
 
@@ -70,7 +69,6 @@ namespace Server.Controllers {
 		public StockQuotesInitiator Initiator { get; }
 
 		/// <summary>
-		/// 
 		/// </summary>
 		public JsonSerializerSettings SerializerSettings { get; init; }
 
@@ -113,7 +111,6 @@ namespace Server.Controllers {
 			);
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="token"></param>
 		/// <param name="begin"></param>
@@ -122,38 +119,62 @@ namespace Server.Controllers {
 		[HttpGet("/api/quote/playback/list")]
 		[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
 		public Task<IActionResult> ReplayQuotesList([FromQuery] [Required] string token, [FromQuery] DateTime? begin, [FromQuery] DateTime? end) {
-			IEnumerator<MinutelyPrice>[] enumerators = null;
+			int[] positions = null;
+			RealtimePrice[][] sources = null;
 			var time = TimeSpan.FromMinutes(5 * Math.Max(114, (int)Math.Floor(begin!.Value.TimeOfDay.TotalMinutes / 5)));
+			bool finished = false;
+			bool initialized = false;
 			return ReplayQuotes(
 				token,
 				(webSocket, config) => {
-					if (enumerators == null)
+					if (!initialized)
 						return Task.CompletedTask;
-					time = time.Add(TimeSpan.FromMinutes(5));
-					var message = new List<MinutelyPrice>(enumerators.Length);
-					bool finished = true;
-					foreach (var enumerator in enumerators) {
-						if (!enumerator.MoveNext())
-							continue;
-						finished = false;
-						if (enumerator.Current!.Time!.Value.TimeOfDay <= time)
-							message.Add(enumerator.Current);
-					}
 					if (finished)
-						webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Playback Finished", CancellationToken.None);
+						return webSocket.CloseStatus.HasValue ? Task.CompletedTask : webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Playback Finished", CancellationToken.None);
+					time = time.Add(TimeSpan.FromMinutes(5));
+					var message = new List<RealtimePrice>(sources!.Length);
+					finished = true;
+					for (int i = 0; i < sources.Length; ++i) {
+						if (positions![i] != sources[i].Length)
+							finished = false;
+						var quote = sources[i][positions[i]];
+						quote.Pinned = config.PinnedStocks.Contains(quote.Id);
+						message.Add(quote);
+						if (positions[i] < sources[i].Length && quote.Time!.Value.TimeOfDay <= time)
+							++positions[i];
+					}
 					return webSocket.SendAsync(message);
 				},
 				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value),
 				(content, type) => {
 					if (type != WebSocketMessageType.Text)
 						return Task.CompletedTask;
+
 					try {
 						string[] ids = JsonConvert.DeserializeObject<string[]>(content, SerializerSettings);
-						enumerators = new IEnumerator<MinutelyPrice>[ids!.Length];
-						for (int i = 0; i < ids.Length; ++i)
-							enumerators[i] = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)ids[i], begin, end, 5).AsEnumerable().GetEnumerator();
+						positions = new int[ids!.Length];
+						sources = new RealtimePrice[ids!.Length][];
+						var preClosing = new Dictionary<DateTime, int?>();
+						for (int i = 0; i < ids.Length; ++i) {
+							var daily = BaoStock.Fetch<DailyPrice[]>("getDailyPrice", (StockId)ids[i], begin, end);
+							foreach (var price in daily)
+								preClosing[price.Date!.Value.Date] = price.PreClosing;
+							positions[i] = 0;
+							sources[i] = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)ids[i], begin, end, 5)
+								.Select(
+									price => {
+										RealtimePrice result = new(price) {
+											Time = price.Time,
+											PreClosing = preClosing[price.Time!.Value.Date]
+										};
+										return result;
+									}
+								)
+								.ToArray();
+						}
+						initialized = true;
 					}
-					catch (Exception) {
+					catch (JsonSerializationException) {
 						// ignored
 					}
 					return Task.CompletedTask;
@@ -162,7 +183,6 @@ namespace Server.Controllers {
 		}
 
 		/// <summary>
-		/// 
 		/// </summary>
 		/// <param name="token"></param>
 		/// <param name="id"></param>
@@ -172,27 +192,40 @@ namespace Server.Controllers {
 		[HttpGet("/api/quote/playback/trend")]
 		[Authorize(AuthenticationSchemes = TokenQueryAuthenticationHandler.SchemeName)]
 		public Task<IActionResult> ReplayQuotesTrend([FromQuery] [Required] string token, [FromQuery] [Required] string id, [FromQuery] DateTime? begin, [FromQuery] DateTime? end) {
-			var collection = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)id, begin, end, 5);
-			var enumerator = collection.AsEnumerable().GetEnumerator();
+			var daily = BaoStock.Fetch<DailyPrice[]>("getDailyPrice", (StockId)id, begin, end);
+			var preClosing = new Dictionary<DateTime, int?>();
+			foreach (var price in daily)
+				preClosing[price.Date!.Value.Date] = price.PreClosing;
+			var source = BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", (StockId)id, begin, end, 5)
+				.Select(
+					price => {
+						RealtimePrice result = new(price) {
+							Time = price.Time,
+							PreClosing = preClosing[price.Time!.Value.Date]
+						};
+						return result;
+					}
+				)
+				.ToArray();
+			int position = 0;
 			var time = TimeSpan.FromMinutes(5 * Math.Max(114, (int)Math.Floor(begin!.Value.TimeOfDay.TotalMinutes / 5)));
 			bool first = true;
 			return ReplayQuotes(
 				token,
 				(webSocket, config) => {
+					if (position == source.Length)
+						return webSocket.CloseStatus.HasValue ? Task.CompletedTask : webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Playback Finished", CancellationToken.None);
 					time = time.Add(TimeSpan.FromMinutes(5));
-					var message = new List<MinutelyPrice>(1);
+					var message = new List<RealtimePrice>(1);
 					if (first) {
-						while (enumerator.MoveNext() && enumerator.Current?.Time!.Value.TimeOfDay < time)
-							message.Add(enumerator.Current);
+						for (; position < source.Length && source[position].Time!.Value.TimeOfDay <= time; ++position) {
+							source[position].Pinned = config.PinnedStocks.Contains(id);
+							message.Add(source[position]);
+						}
 						first = false;
 					}
-					else {
-						bool finished = !enumerator.MoveNext();
-						if (finished)
-							webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Playback Finished", CancellationToken.None);
-						else
-							message.Add(enumerator.Current);
-					}
+					else if (source[position].Time!.Value.TimeOfDay <= time)
+						message.Add(source[position++]);
 					return webSocket.SendAsync(message);
 				},
 				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value)
