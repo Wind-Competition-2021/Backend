@@ -290,8 +290,9 @@ def login():
 if __name__ == "__main__":
     login()
     loginTime = DateTime.today()
-    log = open(str(Path(__file__).parent.absolute()/"Log" /
-               (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
+    logFolder = Path(__file__).parent.absolute()/"Log"
+    logFolder.mkdir(parents=True, exist_ok=True)
+    log = open(str(logFolder / (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
     System.stdin = TextIOWrapper(System.stdin.buffer, encoding='utf8')
     for line in System.stdin:
