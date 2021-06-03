@@ -15,13 +15,13 @@
 	</ItemGroup>
 	<ItemGroup>
 		<_WebToolingArtifacts Remove="Properties\launchSettings.json" />
+		<_WebToolingArtifacts Remove="Properties\PublishProfiles\Local-Folder.pubxml" />
+		<_WebToolingArtifacts Remove="Properties\PublishProfiles\Wind-FTP.pubxml" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Colorful.Console" Version="1.2.15" />
-		<PackageReference Include="Python.Runtime.AllPlatforms" Version="3.7.2.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.1.4" />
-		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.1.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.1.4" />
 		<PackageReference Include="System.Collections" Version="4.3.0" />
@@ -44,6 +44,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BaoStock\BaoStock.csproj" />
 		<ProjectReference Include="..\Initiator\Initiator.csproj" />
+		<ProjectReference Include="..\Shared\Shared.csproj" />
 		<ProjectReference Include="..\Tushare\Tushare.csproj" />
 	</ItemGroup>
 </Project>

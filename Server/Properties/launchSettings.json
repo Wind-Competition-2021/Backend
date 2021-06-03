@@ -17,6 +17,7 @@
     },
     "Server": {
       "commandName": "Project",
+      "workingDirectory": "D:\\Code\\Visual Studio\\Solutions\\Stock Quotes\\Server\\bin\\Debug\\net5.0",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

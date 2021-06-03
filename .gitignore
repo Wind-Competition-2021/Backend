@@ -13,6 +13,7 @@
 !/BaoStock
 /BaoStock/Venv/*
 !/BaoStock/Venv/pyvenv.cfg
+!/Shared
 !/Tushare
 !/*.Test/
 !/.gitignore
