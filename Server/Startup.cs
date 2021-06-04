@@ -103,13 +103,13 @@ namespace Server {
 			services.AddSingleton(settings);
 
 			//Inject BaoStock
-			var baostock = new BaoStockManager(settings);
+			var baoStock = new BaoStockManager(settings);
 			settings.Error += (_, args) => {
 				Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
-				baostock.Process.Kill();
-				baostock.Process.Start();
+				baoStock.Process.Kill();
+				baoStock.Process.Start();
 			};
-			services.AddSingleton(baostock);
+			services.AddSingleton(baoStock);
 
 			//Inject Tushare
 			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", settings);
@@ -118,6 +118,10 @@ namespace Server {
 			//Inject RealtimeQuotesManager
 			var realtimeQuotesManager = new RealtimeQuotesManager(TimeSpan.FromSeconds(5), tushare);
 			services.AddSingleton(realtimeQuotesManager);
+
+			//Inject PlaybackQuotesManager
+			var playbackQuotesManager = new PlaybackQuotesManager(baoStock);
+			services.AddSingleton(playbackQuotesManager);
 
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator();
