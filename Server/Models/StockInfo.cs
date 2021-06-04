@@ -14,24 +14,24 @@ namespace Server.Models {
 		///     Gets or Sets Type
 		/// </summary>
 		[JsonConverter(typeof(StringEnumConverter))]
-		public enum TypeEnum {
+		public enum SecurityType {
 			/// <summary>
 			///     Enum StockEnum for stock
 			/// </summary>
 			[EnumMember(Value = "stock")]
-			StockEnum = 0,
+			Stock = 0,
 
 			/// <summary>
 			///     Enum IndexEnum for index
 			/// </summary>
 			[EnumMember(Value = "index")]
-			IndexEnum = 1,
+			Index = 1,
 
 			/// <summary>
 			///     Enum OtherEnum for other
 			/// </summary>
 			[EnumMember(Value = "other")]
-			OtherEnum = 2
+			Other = 2
 		}
 
 		/// <summary>
@@ -39,7 +39,7 @@ namespace Server.Models {
 		/// </summary>
 		[Required]
 		[DataMember(Name = "type")]
-		public TypeEnum? Type { get; set; }
+		public SecurityType? Type { get; set; }
 
 		/// <summary>
 		///     Gets or Sets Industry

@@ -48,20 +48,22 @@ namespace Server.Controllers {
 			string id
 		) {
 			var info = BaoStock.Fetch<StockInfo>("getStockInfo", (StockId)id);
-			var extra = await Tushare.GetCompanyInformation(id);
-			info.RegisteredCapital = extra.RegisterCapital;
-			info.LegalRepresentative = extra.LegalRepresentative;
-			info.GeneralManager = extra.GeneralManager;
-			info.Secretary = extra.Secretary;
-			info.EmployeeCount = extra.EmployeeCount;
-			info.Province = extra.Province;
-			info.City = extra.City;
-			info.Office = extra.Office;
-			info.Email = extra.Email;
-			info.Website = extra.Website;
-			info.BusinessScope = extra.BusinessScope;
-			info.MainBusiness = extra.MainBusiness;
-			info.Introduction = extra.Introduction;
+			if (info.Type == StockInfo.SecurityType.Stock) {
+				var extra = await Tushare.GetCompanyInformation(id);
+				info.RegisteredCapital = extra.RegisterCapital;
+				info.LegalRepresentative = extra.LegalRepresentative;
+				info.GeneralManager = extra.GeneralManager;
+				info.Secretary = extra.Secretary;
+				info.EmployeeCount = extra.EmployeeCount;
+				info.Province = extra.Province;
+				info.City = extra.City;
+				info.Office = extra.Office;
+				info.Email = extra.Email;
+				info.Website = extra.Website;
+				info.BusinessScope = extra.BusinessScope;
+				info.MainBusiness = extra.MainBusiness;
+				info.Introduction = extra.Introduction;
+			}
 			return Ok(info);
 		}
 
