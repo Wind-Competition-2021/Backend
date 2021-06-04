@@ -73,7 +73,7 @@ namespace Shared {
 		/// <param name="one"></param>
 		/// <param name="other"></param>
 		/// <returns></returns>
-		public static bool operator ==(StockId one, StockId other) => one != null && one.Equals(other);
+		public static bool operator ==(StockId one, StockId other) => one is not null && one.Equals(other);
 
 		/// <summary>
 		/// </summary>
