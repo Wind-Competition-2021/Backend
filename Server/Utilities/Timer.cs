@@ -85,6 +85,9 @@ namespace Server.Utilities {
 		/// <inheritdoc cref="System.Timers.Timer.Start"/>
 		public new void Start() => Enabled = true;
 
+		/// <inheritdoc cref="System.Timers.Timer.Stop"/>
+		public new void Stop() => Enabled = false;
+
 		/// <inheritdoc cref="System.Timers.Timer.Close"/>
 		public new void Close() {
 			_count = 0;
