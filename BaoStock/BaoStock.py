@@ -280,6 +280,11 @@ def checkTradeStatus(date: str = None):
     return "true" if BaoStock.query_trade_dates(date, date).get_row_data()[1] == "1" else "false"
 
 
+def getTradeCalendar(begin: str = None, end: str = None):
+    data = BaoStock.query_trade_dates(begin, end).get_data()
+    return [x[1][0] for x in data.iterrows() if x[1][1] == "1"]
+
+
 def login():
     with HiddenPrints():
         login = BaoStock.login()
@@ -292,7 +297,8 @@ if __name__ == "__main__":
     loginTime = DateTime.today()
     logFolder = Path(__file__).parent.absolute()/"Log"
     logFolder.mkdir(parents=True, exist_ok=True)
-    log = open(str(logFolder / (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
+    log = open(str(
+        logFolder / (DateTime.today().strftime("%Y-%m-%d-%H-%M-%S")+".log")), "w", encoding="utf8")
     System.stdout = TextIOWrapper(System.stdout.buffer, encoding='utf8')
     System.stdin = TextIOWrapper(System.stdin.buffer, encoding='utf8')
     for line in System.stdin:
@@ -316,6 +322,8 @@ if __name__ == "__main__":
             result = getWeeklyPrice(*args)
         elif operation == "checkTradeStatus":
             result = checkTradeStatus(*args)
+        elif operation == "getTradeCalendar":
+            result = getTradeCalendar(*args)
         elif operation == "getProfitability":
             result = getProfitability(*args)
         elif operation == "getOperationalCapability":
