@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -102,8 +103,13 @@ namespace Server {
 			var settings = new JsonSerializerSettings();
 			services.AddSingleton(settings);
 
+			var cache = new MemoryCache(
+				new MemoryCacheOptions {
+					SizeLimit = 4L << 30
+				}
+			);
 			//Inject BaoStock
-			var baoStock = new BaoStockManager(settings);
+			var baoStock = new BaoStockManager(cache, settings);
 			settings.Error += (_, args) => {
 				Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
 				baoStock.Process.Kill();
@@ -112,7 +118,7 @@ namespace Server {
 			services.AddSingleton(baoStock);
 
 			//Inject Tushare
-			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", settings);
+			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", cache, settings);
 			services.AddSingleton(tushare);
 
 			//Inject RealtimeQuotesManager
