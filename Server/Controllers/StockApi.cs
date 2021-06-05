@@ -9,6 +9,7 @@ using Server.Models;
 using Shared;
 using Swashbuckle.AspNetCore.Annotations;
 using Tushare;
+using Api = BaoStock.BaoStockManager.Api;
 
 namespace Server.Controllers {
 	/// <summary>
@@ -47,7 +48,7 @@ namespace Server.Controllers {
 			[FromQuery] [Required] [RegularExpression(@"[a-zA-Z]{2}\.\d{6}")]
 			string id
 		) {
-			var info = BaoStock.Fetch<StockInfo>("getStockInfo", (StockId)id);
+			var info = BaoStock.Fetch<StockInfo>(Api.StockInfo, (StockId)id);
 			if (info.Type == StockInfo.SecurityType.Stock) {
 				var extra = await Tushare.GetCompanyInformation(id);
 				info.RegisteredCapital = extra.RegisterCapital;
@@ -80,7 +81,7 @@ namespace Server.Controllers {
 		[SwaggerResponse(200, type: typeof(List<StockBasicInfo>), description: "List returned successfully")]
 		public IActionResult GetStockList([FromQuery] string type = "default", [FromQuery] DateTime? date = null) {
 			date ??= DateTime.Now.Date;
-			return Ok(BaoStock.Fetch<StockBasicInfo[]>("getStockList", type, date));
+			return Ok(BaoStock.Fetch<StockBasicInfo[]>(Api.StockList, type, date));
 		}
 	}
 }

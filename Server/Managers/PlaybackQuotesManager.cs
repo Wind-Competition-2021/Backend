@@ -5,6 +5,7 @@ using BaoStock;
 using Server.Models;
 using Server.Utilities;
 using Shared;
+using Api = BaoStock.BaoStockManager.Api;
 
 namespace Server.Managers {
 	/// <summary>
@@ -60,12 +61,12 @@ namespace Server.Managers {
 			var sources = new Source[ids.Length];
 			var preClosing = new Dictionary<DateTime, int?>();
 			for (int i = 0; i < ids.Length; ++i) {
-				var daily = BaoStock.Fetch<DailyPrice[]>("getDailyPrice", ids[i], begin, end);
+				var daily = BaoStock.Fetch<DailyPrice[]>(Api.DailyPrice, ids[i], begin, end);
 				foreach (var price in daily)
 					preClosing[price.Date!.Value.Date] = price.PreClosing;
 				sources[i] = new Source(
 					-1,
-					BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", ids[i], begin, end, 5)
+					BaoStock.Fetch<MinutelyPrice[]>(Api.MinutelyPrice, ids[i], begin, end, 5)
 						.Select(
 							price => {
 								RealtimePrice result = new(price) {

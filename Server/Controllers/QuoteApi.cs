@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.Attributes;
 using Server.Models;
 using Swashbuckle.AspNetCore.Annotations;
+using Api = BaoStock.BaoStockManager.Api;
 
 namespace Server.Controllers {
 	/// <summary>
@@ -29,7 +30,7 @@ namespace Server.Controllers {
 		[ValidateModelState]
 		[SwaggerOperation("CheckTradeStatus")]
 		[SwaggerResponse(200, type: typeof(bool), description: "Trading status checked successfully")]
-		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(BaoStock.Fetch<bool>("checkTradeStatus", date));
+		public IActionResult CheckTradeStatus([FromQuery] DateTime? date) => Ok(BaoStock.Fetch<bool>(Api.TradeStatus, date));
 
 		/// <summary>
 		/// </summary>
@@ -54,7 +55,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now.Date;
 			begin ??= end - TimeSpan.FromDays(30);
-			return Ok(BaoStock.Fetch<DailyPrice[]>("getDailyPrice", id, begin, end, rehabilitation));
+			return Ok(BaoStock.Fetch<DailyPrice[]>(Api.DailyPrice, id, begin, end, rehabilitation));
 		}
 
 		/// <summary>
@@ -82,7 +83,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromMinutes(frequency * 30);
-			return Ok(BaoStock.Fetch<MinutelyPrice[]>("getMinutelyPrice", id, begin, end, frequency, rehabilitation));
+			return Ok(BaoStock.Fetch<MinutelyPrice[]>(Api.MinutelyPrice, id, begin, end, frequency, rehabilitation));
 		}
 
 		/// <summary>
@@ -110,7 +111,7 @@ namespace Server.Controllers {
 		) {
 			end ??= DateTime.Now;
 			begin ??= end - TimeSpan.FromDays((frequency == "month" ? 30 : 7) * 30);
-			return Ok(BaoStock.Fetch<WeeklyPrice[]>("getWeeklyPrice", id, begin, end, frequency, rehabilitation));
+			return Ok(BaoStock.Fetch<WeeklyPrice[]>(Api.WeeklyPrice, id, begin, end, frequency, rehabilitation));
 		}
 	}
 }
