@@ -89,7 +89,6 @@ namespace BaoStock {
 						SizeLimit = 4L << 30
 					}
 				);
-			;
 			SerializerSettings = settings;
 		}
 
@@ -114,7 +113,7 @@ namespace BaoStock {
 		/// <param name="args"></param>
 		/// <returns></returns>
 		public T Fetch<T>(Api api, params string[] args) {
-			string? apiName = api.GetAttribute<EnumMemberAttribute>().Value;
+			string apiName = api.GetAttribute<EnumMemberAttribute>().Value;
 			string command = args == null ? apiName : $"{apiName} {string.Join(" ", args)}".TrimEnd();
 			var result = Cache.GetOrCreate(
 				command,

@@ -52,7 +52,6 @@ namespace Tushare {
 						SizeLimit = 4L << 30
 					}
 				);
-			;
 			SerializerSettings = settings;
 		}
 

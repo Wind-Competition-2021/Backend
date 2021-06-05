@@ -159,7 +159,7 @@ namespace Server {
 					Console.WriteLineFormatted(
 						"{0} {1} {2}",
 						Color.Azure,
-						new Formatter(DateTime.Now.ToString(), Color.HotPink),
+						new Formatter(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss.fff"), Color.HotPink),
 						new Formatter(context.Request.Method, Color.Cyan),
 						new Formatter(context.Request.GetDisplayUrl(), Color.MediumSpringGreen)
 					);
