@@ -149,10 +149,8 @@ namespace Server {
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory) {
 			if (env.IsDevelopment())
 				app.UseDeveloperExceptionPage();
-			else {
-				app.UseExceptionHandler("/Error");
+			else
 				app.UseHsts();
-			}
 			app.UseRouting();
 			app.Use(
 				async (context, next) => {
