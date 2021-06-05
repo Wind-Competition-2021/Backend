@@ -166,7 +166,7 @@ namespace BaoStock {
 					AbsoluteExpiration = DateTime.SpecifyKind(DateTime.Now.Date.AddDays(1), DateTimeKind.Local)
 				},
 				_ => new MemoryCacheEntryOptions {
-					SlidingExpiration = TimeSpan.FromMinutes(30)
+					SlidingExpiration = TimeSpan.FromDays(1)
 				}
 			};
 	}

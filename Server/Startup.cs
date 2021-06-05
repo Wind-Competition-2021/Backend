@@ -103,9 +103,10 @@ namespace Server {
 			var settings = new JsonSerializerSettings();
 			services.AddSingleton(settings);
 
+			//Memory cache, maximum size : 8G
 			var cache = new MemoryCache(
 				new MemoryCacheOptions {
-					SizeLimit = 4L << 30
+					SizeLimit = 8L << 30
 				}
 			);
 			//Inject BaoStock
@@ -167,7 +168,6 @@ namespace Server {
 			app.UseSwagger();
 			app.UseAuthorization();
 			app.UseWebSockets();
-			//app.UseFileServer();
 			app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 		}
 	}

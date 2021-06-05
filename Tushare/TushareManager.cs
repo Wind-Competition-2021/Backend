@@ -148,7 +148,7 @@ namespace Tushare {
 					SlidingExpiration = TimeSpan.FromDays(7)
 				},
 				_ => new MemoryCacheEntryOptions {
-					SlidingExpiration = TimeSpan.FromMinutes(30)
+					SlidingExpiration = TimeSpan.FromDays(1)
 				}
 			};
 
