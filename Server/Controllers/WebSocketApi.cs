@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
@@ -77,6 +76,21 @@ namespace Server.Controllers {
 			public JToken Content { get; set; }
 		}
 		#endregion
+
+		/// <summary>
+		/// </summary>
+		[DataContract]
+		public record PlaybackMessage(DateTime Time, List<RealtimePrice> Quotes) {
+			/// <summary>
+			/// </summary>
+			[DataMember(Name = "time")]
+			public DateTime Time { get; } = Time;
+
+			/// <summary>
+			/// </summary>
+			[DataMember(Name = "quotes")]
+			public List<RealtimePrice> Quotes { get; } = Quotes;
+		}
 
 		#region Properties
 		/// <summary>
@@ -344,24 +358,6 @@ namespace Server.Controllers {
 			Resume = 1
 		}
 		#endregion
-
-		/// <summary>
-		/// 
-		/// </summary>
-		[DataContract]
-		public record PlaybackMessage(DateTime Time, List<RealtimePrice> Quotes) {
-			/// <summary>
-			/// 
-			/// </summary>
-			[DataMember(Name = "time")]
-			public DateTime Time { get; } = Time;
-
-			/// <summary>
-			/// 
-			/// </summary>
-			[DataMember(Name = "quotes")]
-			public List<RealtimePrice> Quotes { get; } = Quotes;
-		}
 	}
 
 	#region Extensions

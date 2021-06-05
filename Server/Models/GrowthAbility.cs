@@ -47,41 +47,6 @@ namespace Server.Models {
 		public decimal? Npasgr { get; set; }
 
 		/// <summary>
-		///     Returns the string presentation of the object
-		/// </summary>
-		/// <returns>String presentation of the object</returns>
-		public override string ToString() {
-			var sb = new StringBuilder();
-			sb.Append("class GrowthAbility {\n");
-			sb.Append("  Nagr: ").Append(Nagr).Append('\n');
-			sb.Append("  Tagr: ").Append(Tagr).Append('\n');
-			sb.Append("  Npgr: ").Append(Npgr).Append('\n');
-			sb.Append("  Bepsgr: ").Append(Bepsgr).Append('\n');
-			sb.Append("  Npasgr: ").Append(Npasgr).Append('\n');
-			sb.Append("}\n");
-			return sb.ToString();
-		}
-
-		/// <summary>
-		///     Returns the JSON string presentation of the object
-		/// </summary>
-		/// <returns>JSON string presentation of the object</returns>
-		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
-
-		/// <summary>
-		///     Returns true if objects are equal
-		/// </summary>
-		/// <param name="obj">Object to be compared</param>
-		/// <returns>Boolean</returns>
-		public override bool Equals(object obj) {
-			if (obj is null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			return obj.GetType() == GetType() && Equals((GrowthAbility)obj);
-		}
-
-		/// <summary>
 		///     Returns true if GrowthAbility instances are equal
 		/// </summary>
 		/// <param name="other">Instance of GrowthAbility to be compared</param>
@@ -118,6 +83,41 @@ namespace Server.Models {
 					Npasgr != null &&
 					Npasgr.Equals(other.Npasgr)
 				);
+		}
+
+		/// <summary>
+		///     Returns the string presentation of the object
+		/// </summary>
+		/// <returns>String presentation of the object</returns>
+		public override string ToString() {
+			var sb = new StringBuilder();
+			sb.Append("class GrowthAbility {\n");
+			sb.Append("  Nagr: ").Append(Nagr).Append('\n');
+			sb.Append("  Tagr: ").Append(Tagr).Append('\n');
+			sb.Append("  Npgr: ").Append(Npgr).Append('\n');
+			sb.Append("  Bepsgr: ").Append(Bepsgr).Append('\n');
+			sb.Append("  Npasgr: ").Append(Npasgr).Append('\n');
+			sb.Append("}\n");
+			return sb.ToString();
+		}
+
+		/// <summary>
+		///     Returns the JSON string presentation of the object
+		/// </summary>
+		/// <returns>JSON string presentation of the object</returns>
+		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
+
+		/// <summary>
+		///     Returns true if objects are equal
+		/// </summary>
+		/// <param name="obj">Object to be compared</param>
+		/// <returns>Boolean</returns>
+		public override bool Equals(object obj) {
+			if (obj is null)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			return obj.GetType() == GetType() && Equals((GrowthAbility)obj);
 		}
 
 		/// <summary>

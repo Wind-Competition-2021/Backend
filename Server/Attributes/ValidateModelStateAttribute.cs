@@ -34,7 +34,7 @@ namespace Server.Attributes {
 				var attributeInstance = parameter.GetCustomAttribute(attributeData.AttributeType);
 
 				if (attributeInstance is ValidationAttribute validationAttribute) {
-					var isValid = validationAttribute.IsValid(args);
+					bool isValid = validationAttribute.IsValid(args);
 					if (!isValid)
 						modelState.AddModelError(parameter.Name, validationAttribute.FormatErrorMessage(parameter.Name));
 				}

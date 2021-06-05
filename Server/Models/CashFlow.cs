@@ -1,10 +1,10 @@
+// ReSharper disable IdentifierTypo
+// ReSharper disable StringLiteralTypo
+
 using System;
 using System.Runtime.Serialization;
 using System.Text;
 using Newtonsoft.Json;
-
-// ReSharper disable IdentifierTypo
-// ReSharper disable StringLiteralTypo
 
 namespace Server.Models {
 	/// <summary>
@@ -61,43 +61,6 @@ namespace Server.Models {
 		public decimal? Oncfgrr { get; set; }
 
 		/// <summary>
-		///     Returns the string presentation of the object
-		/// </summary>
-		/// <returns>String presentation of the object</returns>
-		public override string ToString() {
-			var sb = new StringBuilder();
-			sb.Append("class CashFlow {\n");
-			sb.Append("  Catar: ").Append(Catar).Append('\n');
-			sb.Append("  Fatar: ").Append(Fatar).Append('\n');
-			sb.Append("  Tatar: ").Append(Tatar).Append('\n');
-			sb.Append("  Ipm: ").Append(Ipm).Append('\n');
-			sb.Append("  Oncforr: ").Append(Oncforr).Append('\n');
-			sb.Append("  Oncfnpr: ").Append(Oncfnpr).Append('\n');
-			sb.Append("  Oncfgrr: ").Append(Oncfgrr).Append('\n');
-			sb.Append("}\n");
-			return sb.ToString();
-		}
-
-		/// <summary>
-		///     Returns the JSON string presentation of the object
-		/// </summary>
-		/// <returns>JSON string presentation of the object</returns>
-		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
-
-		/// <summary>
-		///     Returns true if objects are equal
-		/// </summary>
-		/// <param name="obj">Object to be compared</param>
-		/// <returns>Boolean</returns>
-		public override bool Equals(object obj) {
-			if (obj is null)
-				return false;
-			if (ReferenceEquals(this, obj))
-				return true;
-			return obj.GetType() == GetType() && Equals((CashFlow)obj);
-		}
-
-		/// <summary>
 		///     Returns true if CashFlow instances are equal
 		/// </summary>
 		/// <param name="other">Instance of CashFlow to be compared</param>
@@ -144,6 +107,43 @@ namespace Server.Models {
 					Oncfgrr != null &&
 					Oncfgrr.Equals(other.Oncfgrr)
 				);
+		}
+
+		/// <summary>
+		///     Returns the string presentation of the object
+		/// </summary>
+		/// <returns>String presentation of the object</returns>
+		public override string ToString() {
+			var sb = new StringBuilder();
+			sb.Append("class CashFlow {\n");
+			sb.Append("  Catar: ").Append(Catar).Append('\n');
+			sb.Append("  Fatar: ").Append(Fatar).Append('\n');
+			sb.Append("  Tatar: ").Append(Tatar).Append('\n');
+			sb.Append("  Ipm: ").Append(Ipm).Append('\n');
+			sb.Append("  Oncforr: ").Append(Oncforr).Append('\n');
+			sb.Append("  Oncfnpr: ").Append(Oncfnpr).Append('\n');
+			sb.Append("  Oncfgrr: ").Append(Oncfgrr).Append('\n');
+			sb.Append("}\n");
+			return sb.ToString();
+		}
+
+		/// <summary>
+		///     Returns the JSON string presentation of the object
+		/// </summary>
+		/// <returns>JSON string presentation of the object</returns>
+		public new string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
+
+		/// <summary>
+		///     Returns true if objects are equal
+		/// </summary>
+		/// <param name="obj">Object to be compared</param>
+		/// <returns>Boolean</returns>
+		public override bool Equals(object obj) {
+			if (obj is null)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			return obj.GetType() == GetType() && Equals((CashFlow)obj);
 		}
 
 		/// <summary>

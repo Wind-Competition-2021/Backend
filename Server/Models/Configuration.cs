@@ -21,7 +21,6 @@ namespace Server.Models {
 		public List<StockId> PinnedStocks { get; set; }
 
 		/// <summary>
-		/// 
 		/// </summary>
 		[DataMember(Name = "playbackSpeed")]
 		[Range(1, int.MaxValue)]
