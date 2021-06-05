@@ -284,7 +284,7 @@ namespace Server.Managers {
 				Now += duration;
 				if (Now >= EndTime || _tradeDayIndex == TradeDays.Length - 1 && Now.TimeOfDay >= TradeEndTime)
 					Finished = true;
-				else if (Now.TimeOfDay >= TradeEndTime) {
+				else if (Now.TimeOfDay > TradeEndTime) {
 					Now += TradeDays[_tradeDayIndex + 1] - TradeDays[_tradeDayIndex] - (TradeEndTime - TradeBeginTime);
 					++_tradeDayIndex;
 				}

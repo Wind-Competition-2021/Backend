@@ -110,7 +110,7 @@ namespace Server.Controllers {
 		public Task<IActionResult> UpdateQuotesList([FromQuery] [Required] string token)
 			=> UpdateQuotes(
 				token,
-				SendMessage(() => RealtimeQuotesManager.GetList(token)),
+				SendRealtimeMessage(token),
 				config => config.RefreshInterval.List!.Value
 			);
 
@@ -122,7 +122,7 @@ namespace Server.Controllers {
 		public Task<IActionResult> UpdateQuotesTrend([FromQuery] [Required] string token, [FromQuery] [Required] string id)
 			=> UpdateQuotes(
 				token,
-				SendMessage(() => RealtimeQuotesManager.GetTrend(token, id)),
+				SendRealtimeMessage(token, id),
 				config => config.RefreshInterval.Trend!.Value
 			);
 
@@ -136,6 +136,16 @@ namespace Server.Controllers {
 				"Trade Off",
 				(ids, _) => RealtimeQuotesManager.Initialize(ids)
 			);
+
+		private Func<WebSocket, Configuration, Task> SendRealtimeMessage(string token, string id = null)
+			=> (webSocket, config) => {
+				var prices = id is null ? RealtimeQuotesManager.GetList(token) : RealtimeQuotesManager.GetTrend(token, id);
+				if (prices == null || prices.Count == 0)
+					return null;
+				foreach (var price in prices)
+					price.Pinned = config.PinnedStocks.Contains(price.Id);
+				return webSocket.SendAsync(prices.ToArray());
+			};
 		#endregion
 
 		#region Replay
@@ -150,7 +160,7 @@ namespace Server.Controllers {
 		public Task<IActionResult> ReplayQuotesList([FromQuery] [Required] string token, [FromQuery] DateTime? begin, [FromQuery] DateTime? end)
 			=> ReplayQuotes(
 				token,
-				SendMessage(() => PlaybackQuotesManager.GetList(token)),
+				SendPlaybackMessage(token),
 				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value),
 				begin,
 				end,
@@ -168,7 +178,7 @@ namespace Server.Controllers {
 					}
 					return Task.CompletedTask;
 				},
-				(fromClient, result) => {
+				(_, _) => {
 					PlaybackQuotesManager[token].Close();
 					PlaybackQuotesManager.Remove(token);
 					return Task.CompletedTask;
@@ -185,12 +195,12 @@ namespace Server.Controllers {
 		public Task<IActionResult> ReplayQuotesTrend([FromQuery] [Required] string token, [FromQuery] [Required] string id)
 			=> ReplayQuotes(
 				token,
-				SendMessage(() => PlaybackQuotesManager.GetTrend(token, id)),
+				SendPlaybackMessage(token, id),
 				config => TimeSpan.FromSeconds(300d / config.PlaybackSpeed!.Value),
 				null,
 				null,
 				null,
-				(fromClient, result) => {
+				(_, _) => {
 					PlaybackQuotesManager.TrendsLastIndices[token].Remove(id);
 					return Task.CompletedTask;
 				}
@@ -213,17 +223,17 @@ namespace Server.Controllers {
 				onMessage,
 				onClose
 			);
-		#endregion
 
-		private static Func<WebSocket, Configuration, Task> SendMessage(Func<List<RealtimePrice>> getPrices)
+		private Func<WebSocket, Configuration, Task> SendPlaybackMessage(string token, string id = null)
 			=> (webSocket, config) => {
-				var prices = getPrices();
-				if (prices == null || prices.Count == 0)
-					return null;
-				foreach (var price in prices)
-					price.Pinned = config.PinnedStocks.Contains(price.Id);
-				return webSocket.SendAsync(prices.ToArray());
+				var prices = id is null ? PlaybackQuotesManager.GetList(token) : PlaybackQuotesManager.GetTrend(token, id);
+				var result = new PlaybackMessage(PlaybackQuotesManager[token].Now, prices);
+				if (prices?.Count > 0)
+					foreach (var price in prices)
+						price.Pinned = config.PinnedStocks.Contains(price.Id);
+				return webSocket.SendAsync(result);
 			};
+		#endregion
 
 		private async Task<IActionResult> PushQuotes(
 			string token,
@@ -334,6 +344,24 @@ namespace Server.Controllers {
 			Resume = 1
 		}
 		#endregion
+
+		/// <summary>
+		/// 
+		/// </summary>
+		[DataContract]
+		public record PlaybackMessage(DateTime Time, List<RealtimePrice> Quotes) {
+			/// <summary>
+			/// 
+			/// </summary>
+			[DataMember(Name = "time")]
+			public DateTime Time { get; } = Time;
+
+			/// <summary>
+			/// 
+			/// </summary>
+			[DataMember(Name = "quotes")]
+			public List<RealtimePrice> Quotes { get; } = Quotes;
+		}
 	}
 
 	#region Extensions
