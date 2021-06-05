@@ -23,7 +23,7 @@ namespace Server.Models {
 		/// <summary>
 		/// </summary>
 		[DataMember(Name = "playbackSpeed")]
-		[Range(1, int.MaxValue)]
+		[Range(1, 1500)]
 		public int? PlaybackSpeed { get; set; }
 
 		/// <summary>

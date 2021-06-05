@@ -215,7 +215,8 @@ namespace Server.Controllers {
 				null,
 				null,
 				(_, _) => {
-					PlaybackQuotesManager.TrendsLastIndices[token].Remove(id);
+					if (PlaybackQuotesManager.TrendsLastIndices.ContainsKey(token))
+						PlaybackQuotesManager.TrendsLastIndices[token].Remove(id);
 					return Task.CompletedTask;
 				}
 			);
