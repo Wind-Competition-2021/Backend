@@ -5,8 +5,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Colorful.Console" Version="1.2.15" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="StackExchange.Redis" Version="2.2.50" />
 	</ItemGroup>
 
 	<ItemGroup>

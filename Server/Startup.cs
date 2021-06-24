@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using BaoStock;
 using Colorful;
 using Initiator;
@@ -10,18 +12,19 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using QuickFix;
 using Server.Filters;
 using Server.Managers;
 using Server.Security;
+using StackExchange.Redis;
 using Tushare;
 using Console = Colorful.Console;
 
@@ -36,13 +39,7 @@ namespace Server {
 		///     Constructor
 		/// </summary>
 		/// <param name="env"></param>
-		/// <param name="configuration"></param>
-		public Startup(IWebHostEnvironment env, IConfiguration configuration) {
-			_hostingEnv = env;
-			Configuration = configuration;
-		}
-
-		private IConfiguration Configuration { get; }
+		public Startup(IWebHostEnvironment env) => _hostingEnv = env;
 
 		/// <summary>
 		///     This method gets called by the runtime. Use this method to add services to the container.
@@ -95,6 +92,8 @@ namespace Server {
 						c.OperationFilter<GeneratePathParamsValidationFilter>();
 					}
 				);
+			string projectPath = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
+			var config = JsonConvert.DeserializeObject<Dictionary<string, JObject>>(File.ReadAllText(Path.Combine(projectPath!, "config.json")));
 
 			//Inject ConfigurationManager
 			services.AddSingleton(new ConfigurationManager());
@@ -103,14 +102,12 @@ namespace Server {
 			var settings = new JsonSerializerSettings();
 			services.AddSingleton(settings);
 
-			//Memory cache, maximum size : 8G
-			var cache = new MemoryCache(
-				new MemoryCacheOptions {
-					SizeLimit = 8L << 30
-				}
-			);
+			//Redis
+			var connection = ConnectionMultiplexer.Connect("localhost:6379");
+			var redis = connection.GetDatabase();
+
 			//Inject BaoStock
-			var baoStock = new BaoStockManager(cache, settings);
+			var baoStock = new BaoStockManager(redis, settings);
 			settings.Error += (_, args) => {
 				Console.WriteLine($"Deserialization Error: {JsonConvert.SerializeObject(args.ErrorContext)}", Color.Red);
 				baoStock.Process.Kill();
@@ -119,7 +116,7 @@ namespace Server {
 			services.AddSingleton(baoStock);
 
 			//Inject Tushare
-			var tushare = new TushareManager("ecffe13bdfb4ccb617b344f276b4827d3614e0a736a5fe7c0c6767ce", cache, settings);
+			var tushare = new TushareManager(config!["Tushare"].ToObject<Dictionary<string, JValue>>()!["token"].Value as string, redis, settings);
 			services.AddSingleton(tushare);
 
 			//Inject RealtimeQuotesManager
@@ -148,6 +145,8 @@ namespace Server {
 		/// <param name="env"></param>
 		/// <param name="loggerFactory"></param>
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory) {
+			if (loggerFactory == null)
+				throw new ArgumentNullException(nameof(loggerFactory));
 			if (env.IsDevelopment())
 				app.UseDeveloperExceptionPage();
 			else

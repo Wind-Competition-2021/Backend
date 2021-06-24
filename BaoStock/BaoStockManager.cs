@@ -5,9 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
-using Microsoft.Extensions.Caching.Memory;
+using StackExchange.Redis;
 using Newtonsoft.Json;
 using Shared;
+using Console = Colorful.Console;
 
 namespace BaoStock {
 	public class BaoStockManager {
@@ -61,9 +62,9 @@ namespace BaoStock {
 		/// <summary>
 		///     Initialize controller with injected objects
 		/// </summary>
-		/// <param name="cache"></param>
+		/// <param name="redis"></param>
 		/// <param name="settings">Injected serializer settings</param>
-		public BaoStockManager(IMemoryCache cache = null, JsonSerializerSettings settings = null) {
+		public BaoStockManager(IDatabase redis = null, JsonSerializerSettings settings = null) {
 			string curRoot = Directory.GetCurrentDirectory();
 			Process = new Process {
 				StartInfo = new ProcessStartInfo {
@@ -83,12 +84,7 @@ namespace BaoStock {
 				Process.Start();
 			};
 			Process.Start();
-			Cache = cache ??
-				new MemoryCache(
-					new MemoryCacheOptions {
-						SizeLimit = 4L << 30
-					}
-				);
+			Redis = redis ?? ConnectionMultiplexer.Connect("localhost:6379").GetDatabase();
 			SerializerSettings = settings;
 		}
 
@@ -99,7 +95,7 @@ namespace BaoStock {
 
 		/// <summary>
 		/// </summary>
-		public IMemoryCache Cache { get; }
+		public IDatabase Redis { get; }
 
 		/// <summary>
 		///     Serializer settings
@@ -115,19 +111,19 @@ namespace BaoStock {
 		public T Fetch<T>(Api api, params string[] args) {
 			string apiName = api.GetAttribute<EnumMemberAttribute>().Value;
 			string command = args == null ? apiName : $"{apiName} {string.Join(" ", args)}".TrimEnd();
-			var result = Cache.GetOrCreate(
-				command,
-				entry => {
-					lock (Process) {
-						Process.StandardInput.WriteLine(command);
-						string json = Process.StandardOutput.ReadLine();
-						entry.SetOptions(SelectCacheOptions(api));
-						entry.Size = json?.Length;
-						return JsonConvert.DeserializeObject<T>(json ?? string.Empty, SerializerSettings);
-					}
+			if (Redis.KeyExists(command)) {
+				Console.WriteLine($"[Cached(BaoStock)] {command}", Color.Yellow);
+				Redis.KeyExpireAsync(command, SelectCacheOptions(api));
+				return Redis.ObjectGet<T>(command);
+			}
+			else
+				lock (Process) {
+					Process.StandardInput.WriteLine(command);
+					string json = Process.StandardOutput.ReadLine();
+					var result = JsonConvert.DeserializeObject<T>(json ?? string.Empty, SerializerSettings);
+					Redis.ObjectSetAsync(command, result).ContinueWith(_ => Redis.KeyExpireAsync(command, SelectCacheOptions(api)));
+					return result;
 				}
-			);
-			return result;
 		}
 
 		/// <summary>
@@ -149,25 +145,13 @@ namespace BaoStock {
 			return Fetch<T>(api, arguments);
 		}
 
-		private static MemoryCacheEntryOptions SelectCacheOptions(Api api)
+		private static ExpirationDate? SelectCacheOptions(Api api)
 			=> api switch {
-				Api.StockList => new MemoryCacheEntryOptions {
-					Priority = CacheItemPriority.NeverRemove
-				},
-				Api.StockInfo => new MemoryCacheEntryOptions {
-					Priority = CacheItemPriority.High,
-					SlidingExpiration = TimeSpan.FromDays(7)
-				},
-				Api.Profitability or Api.OperationalCapability or Api.GrowthAbility or Api.CashFlow or Api.Solvency => new MemoryCacheEntryOptions {
-					Priority = CacheItemPriority.High,
-					SlidingExpiration = TimeSpan.FromDays(7)
-				},
-				Api.TradeStatus => new MemoryCacheEntryOptions {
-					AbsoluteExpiration = DateTime.SpecifyKind(DateTime.Now.Date.AddDays(1), DateTimeKind.Local)
-				},
-				_ => new MemoryCacheEntryOptions {
-					SlidingExpiration = TimeSpan.FromDays(1)
-				}
+				Api.StockList                                                                                       => null,
+				Api.StockInfo                                                                                       => new ExpirationDate(TimeSpan.FromDays(7)),
+				Api.Profitability or Api.OperationalCapability or Api.GrowthAbility or Api.CashFlow or Api.Solvency => new ExpirationDate(TimeSpan.FromDays(7)),
+				Api.TradeStatus                                                                                     => new ExpirationDate(DateTime.Now.Date.AddDays(1)),
+				_                                                                                                   => new ExpirationDate(TimeSpan.FromDays(1))
 			};
 	}
 }

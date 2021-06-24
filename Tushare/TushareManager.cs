@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.Serialization;
@@ -10,7 +11,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using Shared;
+using StackExchange.Redis;
 using Tushare.Models;
+using Console = Colorful.Console;
 
 namespace Tushare {
 	/// <summary>
@@ -42,20 +45,15 @@ namespace Tushare {
 		/// <summary>
 		/// </summary>
 		/// <param name="token"></param>
-		/// <param name="cache"></param>
+		/// <param name="redis"></param>
 		/// <param name="settings"></param>
-		public TushareManager(string token, IMemoryCache cache = null, JsonSerializerSettings settings = null) {
+		public TushareManager(string token, IDatabase redis = null, JsonSerializerSettings settings = null) {
 			Token = token;
-			Cache = cache ??
-				new MemoryCache(
-					new MemoryCacheOptions {
-						SizeLimit = 4L << 30
-					}
-				);
+			Redis = redis ?? ConnectionMultiplexer.Connect("localhost:6379").GetDatabase();
 			SerializerSettings = settings;
 		}
 
-		private IMemoryCache Cache { get; }
+		private IDatabase Redis { get; }
 
 		private JsonSerializerSettings SerializerSettings { get; }
 
@@ -69,7 +67,7 @@ namespace Tushare {
 		/// <param name="parameters"></param>
 		/// <param name="fields"></param>
 		/// <returns></returns>
-		public Task<ResponseWrapper<TRes>> SendRequest<TRes, TParam>(Api api, TParam parameters, string[] fields = null) {
+		public async Task<ResponseWrapper<TRes>> SendRequest<TRes, TParam>(Api api, TParam parameters, string[] fields = null) {
 			string reqBody = JsonConvert.SerializeObject(
 				new RequestWrapper<TParam> {
 					ApiName = api,
@@ -79,17 +77,18 @@ namespace Tushare {
 				},
 				SerializerSettings
 			);
-			return Cache.GetOrCreateAsync(
-				reqBody,
-				async entry => {
-					var content = new StringContent(reqBody, Encoding.UTF8, "application/json");
-					var resp = await HttpClient.PostAsync(Host, content);
-					string respBody = await resp.Content.ReadAsStringAsync();
-					entry.SetOptions(SelectCacheOptions(api));
-					entry.Size = respBody.Length;
-					return JsonConvert.DeserializeObject<ResponseWrapper<TRes>>(await resp.Content.ReadAsStringAsync(), SerializerSettings);
-				}
-			);
+			if (Redis.KeyExists(reqBody)) {
+				Console.WriteLine($"[Cached(Tushare)] {api.GetAttribute<EnumMemberAttribute>().Value}", Color.Yellow);
+				Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api));
+				return Redis.ObjectGet<ResponseWrapper<TRes>>(reqBody);
+			}
+			else {
+				var content = new StringContent(reqBody, Encoding.UTF8, "application/json");
+				var resp = await HttpClient.PostAsync(Host, content);
+				var result = JsonConvert.DeserializeObject<ResponseWrapper<TRes>>(await resp.Content.ReadAsStringAsync(), SerializerSettings);
+				Redis.ObjectSetAsync(reqBody, result).ContinueWith(_ => Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api)));
+				return result;
+			}
 		}
 
 		/// <summary>
@@ -137,19 +136,11 @@ namespace Tushare {
 			return response.Data.Records?.FirstOrDefault();
 		}
 
-		private static MemoryCacheEntryOptions SelectCacheOptions(Api api)
+		private static ExpirationDate SelectCacheOptions(Api api)
 			=> api switch {
-				Api.TradeCalendar => new MemoryCacheEntryOptions {
-					Priority = CacheItemPriority.High,
-					SlidingExpiration = TimeSpan.FromDays(7)
-				},
-				Api.CompanyInformation => new MemoryCacheEntryOptions {
-					Priority = CacheItemPriority.High,
-					SlidingExpiration = TimeSpan.FromDays(7)
-				},
-				_ => new MemoryCacheEntryOptions {
-					SlidingExpiration = TimeSpan.FromDays(1)
-				}
+				Api.TradeCalendar      => new ExpirationDate(TimeSpan.FromDays(7)),
+				Api.CompanyInformation => new ExpirationDate(TimeSpan.FromDays(7)),
+				_                      => new ExpirationDate(TimeSpan.FromDays(1))
 			};
 
 		/// <summary>
