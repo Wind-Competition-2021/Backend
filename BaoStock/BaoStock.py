@@ -22,10 +22,10 @@ class HiddenPrints:
 
 
 default: Callable[[str], str] = lambda x: x
-fromPrice: Callable[[str], int] = lambda x: int(float(x) * 10000)
-fromRate: Callable[[str], int] = lambda x: int(float(x) * 1000000)
-fromPercent: Callable[[str], int] = lambda x: int(float(x) * 10000)
-toInt: Callable[[str], int] = lambda x: int(x)
+fromPrice: Callable[[str], int] = lambda x: None if x == None or x == "" else int(float(x) * 10000)
+fromRate: Callable[[str], int] = lambda x: None if x == None or x == "" else int(float(x) * 1000000)
+fromPercent: Callable[[str], int] = lambda x: None if x == None or x == "" else int(float(x) * 10000)
+toInt: Callable[[str], int] = lambda x: None if x == None or x == "" else int(x)
 toFloat: Callable[[
     str], float] = lambda x: None if x == None or x == "" else float(x)
 toFloored: Callable[[
