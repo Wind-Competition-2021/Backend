@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using BaoStock;
 using Colorful;
-using Initiator;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +24,11 @@ using Server.Security;
 using StackExchange.Redis;
 using Tushare;
 using Console = Colorful.Console;
+
+#if INITIATOR
+using System.Linq;
+using Initiator;
+#endif
 
 namespace Server {
 	/// <summary>
@@ -126,11 +129,11 @@ namespace Server {
 			var playbackQuotesManager = new PlaybackQuotesManager(baoStock);
 			services.AddSingleton(playbackQuotesManager);
 
+			#if INITIATOR
 			//Inject QuickQuotesInitiator
 			var initiator = new StockQuotesInitiator();
 			initiator.DefaultSession = initiator.Sessions.First();
 			services.AddSingleton(initiator);
-			#if INITIATOR
 			initiator.Start();
 			initiator.LogIn();
 			initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));

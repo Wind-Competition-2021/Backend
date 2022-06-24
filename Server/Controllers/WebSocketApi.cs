@@ -41,22 +41,24 @@ namespace Server.Controllers {
 			ConfigurationManager configurationManager,
 			RealtimeQuotesManager realtimeQuotesManager,
 			PlaybackQuotesManager playbackQuotesManager,
-			StockQuotesInitiator initiator,
-			JsonSerializerSettings settings
+			JsonSerializerSettings settings, 
+			StockQuotesInitiator initiator = null
 		) {
 			ConfigurationManager = configurationManager;
 			RealtimeQuotesManager = realtimeQuotesManager;
 			PlaybackQuotesManager = playbackQuotesManager;
-			Initiator = initiator;
 			SerializerSettings = settings;
-			Initiator.Application.MessageReceived += (_, e) => {
-				MsgType type = new();
-				e.Message.Header.GetField(type);
-				if (type.Obj != TDFData.MsgType)
-					return;
-				var message = new TDFData(e.Message);
-				RealtimeQuotesManager.Add(message.WindCode.Obj, new Quote(message));
-			};
+			if (initiator is not null) {
+				Initiator = initiator;
+				Initiator.Application.MessageReceived += (_, e) => {
+					MsgType type = new();
+					e.Message.Header.GetField(type);
+					if (type.Obj != TDFData.MsgType)
+						return;
+					var message = new TDFData(e.Message);
+					RealtimeQuotesManager.Add(message.WindCode.Obj, new Quote(message));
+				};
+			}
 		}
 		#endregion
 
