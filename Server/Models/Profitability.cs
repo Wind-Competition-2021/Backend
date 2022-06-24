@@ -55,7 +55,7 @@ namespace Server.Models {
 		public long? Mbr { get; set; }
 
 		/// <summary>
-		///     Totala Shares
+		///     Total Shares
 		/// </summary>
 		/// <value>Totala Shares</value>
 		[DataMember(Name = "ts")]
