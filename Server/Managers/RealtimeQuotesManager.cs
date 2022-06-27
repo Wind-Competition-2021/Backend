@@ -180,13 +180,16 @@ namespace Server.Managers {
 		///     Send get request
 		/// </summary>
 		/// <param name="uri"></param>
+		/// <param name="headers"></param>
 		/// <returns></returns>
-		public static async Task<string> GetAsync(string uri) {
+		public static async Task<string> GetAsync(string uri, WebHeaderCollection headers = null) {
 			var request = (HttpWebRequest)WebRequest.Create(uri);
 			request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+			if (headers is not null)
+				request.Headers = headers;
 			using var response = (HttpWebResponse)await request.GetResponseAsync();
 			await using var stream = response.GetResponseStream();
-			using var reader = new StreamReader(stream);
+			using var reader = new StreamReader(stream!);
 			return await reader.ReadToEndAsync();
 		}
 
@@ -201,7 +204,10 @@ namespace Server.Managers {
 			#else
 			string uri = "http://hq.sinajs.cn/list=" + string.Join(',', ids.Select(id => id[..2] + id[3..]));
 			#endif
-			string raw = await GetAsync(uri);
+			string raw = await GetAsync(uri, new WebHeaderCollection {
+				{"User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36 Edg/103.0.1264.37"},
+				{"Referer", "https://finance.sina.com.cn"}
+			});
 			var rows = raw.Split('\n', '\r')
 				.Where(row => !string.IsNullOrEmpty(row))
 				.ToList();
