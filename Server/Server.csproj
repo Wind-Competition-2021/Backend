@@ -44,7 +44,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\BaoStock\BaoStock.csproj" />
-		<ProjectReference Include="..\Initiator\Initiator.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 		<ProjectReference Include="..\Tushare\Tushare.csproj" />
 	</ItemGroup>

@@ -25,11 +25,6 @@ using StackExchange.Redis;
 using Tushare;
 using Console = Colorful.Console;
 
-#if INITIATOR
-using System.Linq;
-using Initiator;
-#endif
-
 namespace Server {
 	/// <summary>
 	///     Startup
@@ -128,16 +123,6 @@ namespace Server {
 			//Inject PlaybackQuotesManager
 			var playbackQuotesManager = new PlaybackQuotesManager(baoStock);
 			services.AddSingleton(playbackQuotesManager);
-
-			#if INITIATOR
-			//Inject QuickQuotesInitiator
-			var initiator = new StockQuotesInitiator();
-			initiator.DefaultSession = initiator.Sessions.First();
-			services.AddSingleton(initiator);
-			initiator.Start();
-			initiator.LogIn();
-			initiator.UntilLoggedIn().ContinueWith(_ => initiator.RequestMarketData(StockQuotesInitiator.MarketDataRequestType.RealTime, DateTime.Now.Date, DateTime.Now.Date));
-			#endif
 		}
 
 		/// <summary>

@@ -9,18 +9,14 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using Initiator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
-using QuickFix.Fields;
-using QuickFix.FIX44;
 using Server.Managers;
 using Server.Models;
 using Server.Security;
-using Quote = Initiator.Quote;
 using Timer = Server.Utilities.Timer;
 
 namespace Server.Controllers {
@@ -35,30 +31,17 @@ namespace Server.Controllers {
 		/// <param name="configurationManager"></param>
 		/// <param name="realtimeQuotesManager"></param>
 		/// <param name="playbackQuotesManager"></param>
-		/// <param name="initiator"></param>
 		/// <param name="settings"></param>
 		public WebSocketController(
 			ConfigurationManager configurationManager,
 			RealtimeQuotesManager realtimeQuotesManager,
 			PlaybackQuotesManager playbackQuotesManager,
-			JsonSerializerSettings settings, 
-			StockQuotesInitiator initiator = null
+			JsonSerializerSettings settings
 		) {
 			ConfigurationManager = configurationManager;
 			RealtimeQuotesManager = realtimeQuotesManager;
 			PlaybackQuotesManager = playbackQuotesManager;
 			SerializerSettings = settings;
-			if (initiator is not null) {
-				Initiator = initiator;
-				Initiator.Application.MessageReceived += (_, e) => {
-					MsgType type = new();
-					e.Message.Header.GetField(type);
-					if (type.Obj != TDFData.MsgType)
-						return;
-					var message = new TDFData(e.Message);
-					RealtimeQuotesManager.Add(message.WindCode.Obj, new Quote(message));
-				};
-			}
 		}
 		#endregion
 
@@ -106,10 +89,6 @@ namespace Server.Controllers {
 		/// <summary>
 		/// </summary>
 		public PlaybackQuotesManager PlaybackQuotesManager { get; }
-
-		/// <summary>
-		/// </summary>
-		public StockQuotesInitiator Initiator { get; }
 
 		/// <summary>
 		/// </summary>

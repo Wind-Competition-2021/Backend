@@ -1,8 +1,8 @@
 using System;
 using System.Runtime.Serialization;
 using System.Text;
-using Initiator;
 using Newtonsoft.Json;
+using Shared;
 
 namespace Server.Models {
 	/// <summary>
