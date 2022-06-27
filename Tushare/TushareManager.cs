@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -79,16 +78,14 @@ namespace Tushare {
 			);
 			if (Redis.KeyExists(reqBody)) {
 				Console.WriteLine($"[Cached(Tushare)] {api.GetAttribute<EnumMemberAttribute>().Value}", Color.Yellow);
-				Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api));
+				await Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api));
 				return Redis.ObjectGet<ResponseWrapper<TRes>>(reqBody);
 			}
-			else {
-				var content = new StringContent(reqBody, Encoding.UTF8, "application/json");
-				var resp = await HttpClient.PostAsync(Host, content);
-				var result = JsonConvert.DeserializeObject<ResponseWrapper<TRes>>(await resp.Content.ReadAsStringAsync(), SerializerSettings);
-				Redis.ObjectSetAsync(reqBody, result).ContinueWith(_ => Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api)));
-				return result;
-			}
+			var content = new StringContent(reqBody, Encoding.UTF8, "application/json");
+			var resp = await HttpClient.PostAsync(Host, content);
+			var result = JsonConvert.DeserializeObject<ResponseWrapper<TRes>>(await resp.Content.ReadAsStringAsync(), SerializerSettings);
+			await Redis.ObjectSetAsync(reqBody, result).ContinueWith(_ => Redis.KeyExpireAsync(reqBody, SelectCacheOptions(api)));
+			return result;
 		}
 
 		/// <summary>

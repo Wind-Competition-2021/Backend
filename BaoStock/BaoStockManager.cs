@@ -68,8 +68,8 @@ namespace BaoStock {
 			string curRoot = Directory.GetCurrentDirectory();
 			Process = new Process {
 				StartInfo = new ProcessStartInfo {
-					FileName = "py",
-					Arguments = $"-3.9 \"{Path.Combine(curRoot, "BaoStock.py")}\"",
+					FileName = "python",
+					Arguments = $"\"{Path.Combine(curRoot, "BaoStock.py")}\"",
 					UseShellExecute = false,
 					RedirectStandardInput = true,
 					RedirectStandardOutput = true,
