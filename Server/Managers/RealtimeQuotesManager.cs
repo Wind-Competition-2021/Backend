@@ -142,7 +142,8 @@ namespace Server.Managers {
 		/// <returns></returns>
 		public async Task Initialize(string[] ids) {
 			foreach (string id in ids)
-				Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
+                if (!Quotes.ContainsKey(id))
+                    Quotes.Add(id, (new List<Quote>(), new List<Quote>()));
 			_isTradeDay = await Tushare.CheckTradeStatus();
 			var now = DateTime.Now;
 			//Update trade day status at 0:00
